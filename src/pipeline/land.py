@@ -18,7 +18,9 @@ def land_rows(con: duckdb.DuckDBPyConnection, table_name: str, rows: list[dict])
     df = pd.DataFrame(rows)
     con.register("_land_incoming", df)
     try:
-        con.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM _land_incoming LIMIT 0")
+        con.execute(
+            f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM _land_incoming LIMIT 0"
+        )
         con.execute(f"INSERT INTO {table_name} SELECT * FROM _land_incoming")
     finally:
         con.unregister("_land_incoming")

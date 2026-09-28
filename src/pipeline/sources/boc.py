@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -21,7 +21,7 @@ def fetch_fx_usd_cad(client: httpx.Client | None = None) -> list[dict]:
     try:
         response = client.get(BOC_URL, params={"start_date": BOC_RELIABLE_START_DATE})
         response.raise_for_status()
-        retrieved_at = datetime.now(timezone.utc)
+        retrieved_at = datetime.now(UTC)
         payload = response.json()
 
         rows: list[dict] = []

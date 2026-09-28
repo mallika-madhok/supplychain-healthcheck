@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from stats_can import scwds
 
@@ -46,7 +46,7 @@ def fetch_apparel_trade(periods: int = 6) -> list[dict]:
             pairs.append((TRADE_PRODUCT_ID, coordinate))
 
     results = scwds.get_data_from_cube_pid_coord_and_latest_n_periods(pairs, periods)
-    retrieved_at = datetime.now(timezone.utc)
+    retrieved_at = datetime.now(UTC)
 
     rows: list[dict] = []
     for result in results:
@@ -76,7 +76,7 @@ def fetch_clothing_cpi(periods: int = 6) -> list[dict]:
     """
     pairs = [(CPI_PRODUCT_ID, CPI_COORDINATE)]
     results = scwds.get_data_from_cube_pid_coord_and_latest_n_periods(pairs, periods)
-    retrieved_at = datetime.now(timezone.utc)
+    retrieved_at = datetime.now(UTC)
 
     rows: list[dict] = []
     for result in results:

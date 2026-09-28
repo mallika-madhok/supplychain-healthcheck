@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import httpx
 import pandas as pd
@@ -25,7 +25,7 @@ def fetch_gscpi(client: httpx.Client | None = None) -> list[dict]:
     try:
         response = client.get(GSCPI_URL)
         response.raise_for_status()
-        retrieved_at = datetime.now(timezone.utc)
+        retrieved_at = datetime.now(UTC)
 
         df = pd.read_excel(io.BytesIO(response.content), sheet_name="GSCPI Monthly Data")
         df = df.dropna(subset=["Date", "GSCPI"])
