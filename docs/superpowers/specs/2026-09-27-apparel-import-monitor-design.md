@@ -29,17 +29,27 @@ open questions in `PROJECT_BRIEF.md`. It is the input to the implementation plan
 ## 3. Architecture overview
 
 ```
-GitHub Actions (cron, weekly)
-  Extract (Python) -> dbt-duckdb (staging -> marts) -> export Parquet to data/ in repo
+GitHub Actions (cron, weekly) — free GitHub-hosted runner
+  Extract (Python, runs on the Actions runner)
+       |
+       v
+  dbt-duckdb, targeting MotherDuck (md:) — staging -> marts
+  transformation SQL executes as MotherDuck cloud compute (free tier)
+       |
+       v  COPY ... TO parquet
+  Export Parquet -> data/ in repo
        |
        v  git commit (data/*.parquet)
 GitHub Pages (static)
   plain HTML/CSS/JS + DuckDB-Wasm + Plotly.js
   loads Parquet files, runs SQL in-browser for what-if recompute
+  (no MotherDuck connection, no token, ever, in the browser)
 ```
 
-No server runs at request time. GitHub Actions does all compute on a schedule; the
-browser does the rest via DuckDB-Wasm.
+No server runs at request time. GitHub Actions does the extraction and orchestration on a
+schedule; MotherDuck does the transformation compute (billed against its free tier, never
+reached by the public site); the visitor's browser does the rest via DuckDB-Wasm, with no
+dependency on MotherDuck at all.
 
 ### 3.1 Language and environment
 
@@ -72,18 +82,54 @@ constraint).
 
 ### 3.3 Storage and transformation
 
-- DuckDB + Parquet. `dbt Core` with the `dbt-duckdb` adapter (chosen over SQLMesh — dbt is
-  the name retail/BI hiring managers are far more likely to recognize, which matters for
-  the interview story; SQLMesh has some technical advantages but less name recognition).
-- Standard staging -> marts layering.
-- Final Parquet files committed to `data/` in the repo (chosen over GitHub Release assets —
-  simpler for both the weekly Action and the DuckDB-Wasm frontend to fetch via a plain
-  HTTP URL, e.g. raw.githubusercontent.com; repo size growth from Parquet is expected to
-  stay small, revisit if it becomes a problem).
+- **MotherDuck (free tier) is the warehouse the transformation layer actually runs
+  against.** `dbt Core` with the `dbt-duckdb` adapter (chosen over SQLMesh — dbt is the
+  name retail/BI hiring managers are far more likely to recognize, which matters for the
+  interview story; SQLMesh has some technical advantages but less name recognition) points
+  its profile at `md:<database>?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}` instead
+  of a local DuckDB file. `dbt build` executes the staging -> marts SQL as real cloud
+  queries billed against MotherDuck's free-tier compute hours.
+- Raw extracted data lands locally first (cheap, no need to spend MotherDuck compute on
+  raw HTTP pulls), then is loaded into MotherDuck — in the same DuckDB session — using
+  DuckDB's multi-database `ATTACH` (local file + `md:` database attached together,
+  `CREATE TABLE md_db.raw.foo AS SELECT * FROM local_db.raw.foo`).
+- Standard staging -> marts layering, both living in MotherDuck.
+- **This is deliberately separate from what the public site depends on.** After `dbt
+  build` finishes, a final export step (`COPY <mart> TO 'data/<name>.parquet' (FORMAT
+  PARQUET)`) pulls the finished marts back out of MotherDuck as plain Parquet files,
+  committed to `data/` in the repo (chosen over GitHub Release assets — simpler for both
+  the weekly Action and the DuckDB-Wasm frontend to fetch via a plain HTTP URL, e.g.
+  raw.githubusercontent.com; repo size growth from Parquet is expected to stay small,
+  revisit if it becomes a problem). The public GitHub Pages site only ever reads these
+  committed Parquet files via DuckDB-Wasm — it has no MotherDuck connection, no token, and
+  no dependency on MotherDuck being reachable or even still existing.
 - Revisions: StatCan revises recent trade data. Each pull is stored with a retrieval
   timestamp and release date rather than overwritten; dbt models select the latest known
   value per period, and revision history stays queryable for audit rather than assumed
   fixed.
+
+### 3.3.1 MotherDuck access and cost safety
+
+- **Credential**: a MotherDuck **service account token** (not a personal login token),
+  stored only as the GitHub Actions repository secret `MOTHERDUCK_TOKEN`. It is read by
+  the CI workflow via `env_var('MOTHERDUCK_TOKEN')` in the dbt profile and is never written
+  to a file, log, or the browser-facing frontend. Claude Code does not need or request the
+  raw token value — the author sets it directly via `gh secret set MOTHERDUCK_TOKEN`,
+  outside of any assistant-visible transcript.
+- **Zero-spend guarantee**: the MotherDuck Free/Lite account has no payment method on
+  file. Per MotherDuck's own Fees Addendum, a Free Account's Storage Volume and Query
+  Volume are capped at the plan's Included Volumes, and additional volume requires
+  upgrading to a Commercial Account — which requires adding a card. With no card ever
+  added, there is no mechanism by which the account can be charged, regardless of how
+  overage is enforced internally (block/throttle/suspend). **The only way this guarantee
+  breaks is if a credit card is ever added to the MotherDuck account — this must not
+  happen for this project.**
+- **Graceful degradation**: the pipeline is written to fail softly if the MotherDuck free
+  compute-hour or storage cap is ever reached mid-run — log a clear warning, skip that
+  week's MotherDuck-dependent export, and leave the last known-good Parquet files (and
+  therefore the live site) untouched, rather than retrying aggressively or surfacing a
+  prompt to upgrade. Given this project's small weekly workload, hitting the free tier's
+  10 compute-hours/month cap at all is expected to be rare.
 
 ### 3.4 Data quality and testing
 
@@ -112,7 +158,10 @@ new batches appear rarely and are not tied to the weekly refresh.
   and would work against "explain every line in an interview."
 - DuckDB-Wasm loads the committed Parquet files and runs SQL client-side for the what-if
   recompute and driver detail queries — the same SQL mental model as the dbt marts,
-  entirely in-browser, no server round-trip.
+  entirely in-browser, no server round-trip. **Never connects to MotherDuck** — MotherDuck
+  requires an access token to query, and embedding one in public browser code would expose
+  it to extraction/abuse (see 3.3.1). The frontend's only data dependency is the committed
+  Parquet files.
 - Plotly.js for charts (chosen over Observable Plot — more built-in interactivity like
   hover/zoom/legend-toggling for little extra code, and a name recruiters recognize).
 - Single-page app, state encoded in the URL (profile inputs, current driver view) so pages
@@ -190,6 +239,13 @@ clean commit history with a working CI badge.
 - HS-level bulk CSV ingestion cadence (how often to check the Open Government Portal for a
   new batch) should be set based on how often that portal has actually published new
   batches historically.
+- `MOTHERDUCK_TOKEN` must be set as a GitHub Actions repository secret before the weekly
+  workflow can run `dbt build` against MotherDuck; the author sets this directly (see
+  3.3.1), not via Claude Code.
+- Confirm at implementation time whether `dbt-duckdb`'s `md:` connection behaves
+  differently under `dbt build` vs. `dbt run` with respect to MotherDuck compute billing,
+  and whether ephemeral/view materializations avoid consuming compute-hours where a table
+  materialization would.
 
 ## 7. Non-goals (unchanged from brief)
 
