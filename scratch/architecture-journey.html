@@ -1,0 +1,407 @@
+<title>Pipeline Journey</title>
+<style>
+:root{
+  --bg:#f7f5f0;
+  --surface:#ffffff;
+  --surface-2:#eeebe2;
+  --ink:#1c2422;
+  --ink-dim:#5b6660;
+  --line:#d8d3c6;
+  --accent:#1f6f5c;
+  --accent-ink:#0d3a30;
+  --amber:#b5762a;
+  --amber-bg:#f6ead6;
+  --code-bg:#12201c;
+  --code-ink:#c9f3e2;
+  --shadow: 0 1px 2px rgba(28,36,34,.06), 0 6px 20px rgba(28,36,34,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12181a;
+    --surface:#182220;
+    --surface-2:#1f2b28;
+    --ink:#e9f2ee;
+    --ink-dim:#9db0aa;
+    --line:#2c3a36;
+    --accent:#4fd3ab;
+    --accent-ink:#bdf5e1;
+    --amber:#e3a75c;
+    --amber-bg:#2c2417;
+    --code-bg:#0b1513;
+    --code-ink:#a9e9cf;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12181a;
+  --surface:#182220;
+  --surface-2:#1f2b28;
+  --ink:#e9f2ee;
+  --ink-dim:#9db0aa;
+  --line:#2c3a36;
+  --accent:#4fd3ab;
+  --accent-ink:#bdf5e1;
+  --amber:#e3a75c;
+  --amber-bg:#2c2417;
+  --code-bg:#0b1513;
+  --code-ink:#a9e9cf;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Public Sans", -apple-system, Segoe UI, sans-serif;
+  padding:0 16px;
+  line-height:1.5;
+}
+.wrap{max-width:820px; margin:0 auto; padding-block:48px 80px;}
+.eyebrow{
+  font-family:"JetBrains Mono", monospace;
+  font-size:12.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 10px;
+}
+h1{
+  font-size:clamp(28px,5vw,40px);
+  line-height:1.1;
+  margin:0 0 14px;
+  text-wrap:balance;
+  letter-spacing:-.01em;
+}
+.lede{
+  font-size:16.5px;
+  color:var(--ink-dim);
+  max-width:60ch;
+  margin:0 0 36px;
+}
+.legend{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  font-family:"JetBrains Mono", monospace;
+  font-size:12px;
+  color:var(--ink-dim);
+  margin-bottom:28px;
+}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot.you{background:var(--accent)}
+.dot.tool{background:var(--amber)}
+
+/* overview diagram */
+.diagram{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:22px 20px 26px;
+  box-shadow:var(--shadow);
+  margin-bottom:44px;
+  overflow-x:auto;
+}
+.diagram svg{display:block; min-width:640px; width:100%; height:auto;}
+
+/* journey */
+.journey{
+  position:relative;
+  padding-left:34px;
+}
+.journey::before{
+  content:"";
+  position:absolute;
+  left:11px; top:8px; bottom:8px;
+  width:2px;
+  background:linear-gradient(to bottom, var(--accent), var(--line));
+}
+.step{
+  position:relative;
+  margin-bottom:30px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px 22px 22px;
+  box-shadow:var(--shadow);
+}
+.step::before{
+  content:attr(data-n);
+  position:absolute;
+  left:-34px; top:22px;
+  width:24px; height:24px;
+  border-radius:50%;
+  background:var(--accent);
+  color:var(--bg);
+  font-family:"JetBrains Mono", monospace;
+  font-size:12px;
+  font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.step h2{
+  font-size:18.5px;
+  margin:0 0 4px;
+  letter-spacing:-.01em;
+}
+.step .sub{
+  font-family:"JetBrains Mono", monospace;
+  font-size:12px;
+  color:var(--amber);
+  margin:0 0 12px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.step p{margin:0 0 12px; color:var(--ink)}
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:14px;
+}
+@media (max-width:520px){ .grid2{grid-template-columns:1fr} }
+.card{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.card .label{
+  font-family:"JetBrains Mono", monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--ink-dim);
+  margin:0 0 6px;
+}
+.card.learn{background:var(--amber-bg)}
+.card.learn .label{color:var(--amber)}
+.card p{margin:0; font-size:14px}
+code{
+  font-family:"JetBrains Mono", monospace;
+  font-size:.92em;
+  background:var(--code-bg);
+  color:var(--code-ink);
+  padding:1px 6px;
+  border-radius:5px;
+}
+.tag{
+  display:inline-block;
+  font-family:"JetBrains Mono", monospace;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:99px;
+  background:var(--surface-2);
+  color:var(--ink-dim);
+  margin:2px 6px 0 0;
+}
+.note{
+  margin-top:44px;
+  padding:16px 18px;
+  border-left:3px solid var(--amber);
+  background:var(--amber-bg);
+  border-radius:0 10px 10px 0;
+  font-size:14px;
+}
+.note strong{color:var(--amber)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Canadian Apparel Import Pressure Monitor &mdash; v1 architecture</p>
+  <h1>From public data to a live score, and every stop in between</h1>
+  <p class="lede">This is the same journey a row of data takes through your pipeline, laid out as a first pass through data engineering: what runs, where, on what schedule, and the concept each stage is teaching you.</p>
+
+  <div class="legend">
+    <span><span class="dot you"></span>runs weekly, unattended, in GitHub Actions</span>
+    <span><span class="dot tool"></span>runs on demand, in the visitor's browser</span>
+  </div>
+
+  <div class="diagram">
+    <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture overview: extract, transform, export, publish to GitHub Pages, then browser query">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-dim)"/>
+        </marker>
+      </defs>
+      <!-- lane label -->
+      <text x="16" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--accent)" letter-spacing="1">GITHUB ACTIONS &middot; WEEKLY CRON</text>
+      <rect x="10" y="36" width="620" height="100" rx="12" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/>
+
+      <!-- extract -->
+      <rect x="26" y="56" width="140" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="96" y="82" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">Extract</text>
+      <text x="96" y="99" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">python + httpx</text>
+      <text x="96" y="111" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">stats_can</text>
+
+      <line x1="166" y1="88" x2="200" y2="88" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- transform -->
+      <rect x="200" y="56" width="140" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="270" y="82" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">Transform</text>
+      <text x="270" y="99" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">dbt-duckdb</text>
+      <text x="270" y="111" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">staging &rarr; marts</text>
+
+      <line x1="340" y1="88" x2="374" y2="88" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- test -->
+      <rect x="374" y="56" width="120" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="434" y="82" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">Test</text>
+      <text x="434" y="99" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">dbt test</text>
+      <text x="434" y="111" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">pytest</text>
+
+      <line x1="494" y1="88" x2="528" y2="88" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- export -->
+      <rect x="528" y="56" width="90" height="64" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="573" y="82" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">Export</text>
+      <text x="573" y="99" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">*.parquet</text>
+      <text x="573" y="111" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">to data/</text>
+
+      <!-- git commit down -->
+      <line x1="573" y1="120" x2="573" y2="150" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="588" y="140" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink-dim)">git commit</text>
+
+      <!-- pages lane -->
+      <text x="16" y="180" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--amber)" letter-spacing="1">GITHUB PAGES &middot; STATIC, IN THE VISITOR'S BROWSER</text>
+      <rect x="10" y="190" width="620" height="64" rx="12" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/>
+
+      <rect x="26" y="200" width="150" height="44" rx="10" fill="var(--surface)" stroke="var(--amber)" stroke-width="1.5"/>
+      <text x="101" y="226" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">HTML / CSS / JS</text>
+
+      <line x1="176" y1="222" x2="206" y2="222" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <rect x="206" y="200" width="150" height="44" rx="10" fill="var(--surface)" stroke="var(--amber)" stroke-width="1.5"/>
+      <text x="281" y="226" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">DuckDB&#8209;Wasm (SQL)</text>
+
+      <line x1="356" y1="222" x2="386" y2="222" stroke="var(--ink-dim)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <rect x="386" y="200" width="150" height="44" rx="10" fill="var(--surface)" stroke="var(--amber)" stroke-width="1.5"/>
+      <text x="461" y="226" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">Plotly.js charts</text>
+
+      <!-- sources column -->
+      <text x="700" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink-dim)" letter-spacing="1">SOURCES</text>
+      <text x="700" y="52" font-family="Public Sans, sans-serif" font-size="12" fill="var(--ink)">NY Fed GSCPI</text>
+      <text x="700" y="74" font-family="Public Sans, sans-serif" font-size="12" fill="var(--ink)">BoC Valet (FX)</text>
+      <text x="700" y="96" font-family="Public Sans, sans-serif" font-size="12" fill="var(--ink)">StatCan WDS</text>
+      <text x="700" y="118" font-family="Public Sans, sans-serif" font-size="12" fill="var(--ink)">CIMT bulk CSV</text>
+      <line x1="690" y1="88" x2="640" y2="88" stroke="var(--ink-dim)" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrow)"/>
+    </svg>
+  </div>
+
+  <div class="journey">
+
+    <div class="step" data-n="1">
+      <h2>A number leaves a government server</h2>
+      <p class="sub">extract &middot; runs weekly</p>
+      <p>Your pipeline asks four public agencies for whatever's new: the NY Fed's supply chain index, the Bank of Canada's daily USD/CAD rate, and two Statistics Canada tables (import mix by country, clothing CPI). Nothing is uploaded by hand &mdash; a scheduled job in <code>GitHub Actions</code> does this every week, whether or not anyone visits the site.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">httpx</span><span class="tag">stats_can</span><span class="tag">GitHub Actions cron</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>Extraction is the part of a pipeline most tutorials skip: real APIs are inconsistent, undocumented in places, and change on their own schedule. You're building the part that has to cope with that.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-n="2">
+      <h2>Raw pulls get saved exactly as received</h2>
+      <p class="sub">land &middot; runs weekly</p>
+      <p>Before anything is cleaned up, each pull is written to disk with a timestamp and its source's own release date attached. Statistics Canada revises recent trade data after the fact, so nothing here assumes this week's numbers are final &mdash; a later pull can add a corrected value without erasing what was known at the time.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">DuckDB</span><span class="tag">raw / staging tables</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>"Never overwrite raw data" is one of the load-bearing rules of data engineering &mdash; it's what makes a pipeline auditable and debuggable months later.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-n="3">
+      <h2>SQL models turn raw pulls into trustworthy tables</h2>
+      <p class="sub">transform &middot; runs weekly</p>
+      <p><code>dbt</code> models reshape the raw data in layers: staging models rename and type columns and pick the latest known value per period, mart models compute the actual scoring inputs &mdash; the currency z-score, the origin concentration (HHI), the freight pressure index. Each model is a plain, readable SQL file.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">dbt-duckdb</span><span class="tag">staging &rarr; marts</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>Layered SQL modeling &mdash; the industry-standard way analytics teams keep transformations readable, testable, and reusable instead of one giant unreadable query.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-n="4">
+      <h2>The pipeline checks its own work</h2>
+      <p class="sub">test &middot; runs weekly, before anything ships</p>
+      <p><code>dbt test</code> and <code>pytest</code> run automatically. If a source went quiet, a country code is unexpectedly null, or the HHI math breaks, the run fails loudly here &mdash; before a bad number ever reaches a chart. This is the difference between a pipeline and a script that happens to work today.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">dbt test</span><span class="tag">pytest</span><span class="tag">source freshness checks</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>Data quality testing: the practice that turns "it worked when I ran it" into "it's safe to run unattended, forever."</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-n="5">
+      <h2>The finished tables leave the pipeline as files</h2>
+      <p class="sub">export &amp; publish &middot; runs weekly</p>
+      <p>The tested marts are written out as <code>Parquet</code> files into <code>data/</code> and committed straight into the repository. That commit is the handoff point: everything before this line only you and GitHub Actions ever see; everything after this line is what a visitor's browser can reach.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">Parquet</span><span class="tag">git commit</span><span class="tag">GitHub Pages</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>Treating your data warehouse's output as versioned files, not a database you have to keep running &mdash; the trick that makes "free hosting forever" possible here.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-n="6">
+      <h2>A visitor's own browser becomes the query engine</h2>
+      <p class="sub">serve &amp; query &middot; runs on every visit, on their device</p>
+      <p>Nothing runs on a server when someone opens the site. Their browser loads <code>DuckDB&#8209;Wasm</code>, fetches the Parquet files directly, and runs real SQL locally &mdash; the headline score, the driver detail charts, and the what-if slider are all live queries against data that lives on their own machine for the length of that visit.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">DuckDB-Wasm</span><span class="tag">Plotly.js</span><span class="tag">plain JS, no build step</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>The client can be the compute layer. This is what makes the "what-if" slider instant and free to run, no matter how many people use it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-n="7">
+      <h2>Every number shown is auditable, always</h2>
+      <p class="sub">transparency &middot; visible on every chart, not a toggle</p>
+      <p>Next to every chart and table sits the exact SQL query that produced it, shown permanently &mdash; not hidden behind a "show query" button. Anyone, including a hiring manager three clicks in, can check that the number on screen is really what the query says it is.</p>
+      <div class="grid2">
+        <div class="card">
+          <p class="label">tools</p>
+          <p><span class="tag">rendered SQL panel</span><span class="tag">raw result table</span></p>
+        </div>
+        <div class="card learn">
+          <p class="label">concept you're learning</p>
+          <p>Reproducibility isn't a README claim &mdash; it's a UI decision. Showing the query is what makes the transparency claim checkable, not just stated.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note"><strong>Why this shape matters for you specifically:</strong> every arrow on this diagram is a boundary a real data team also has &mdash; between "raw" and "trusted," between "scheduled batch" and "live query," between "computed" and "shown with proof." Building each boundary yourself, even at small scale, is what lets you describe this project as engineering rather than a demo.</p>
+</div>
