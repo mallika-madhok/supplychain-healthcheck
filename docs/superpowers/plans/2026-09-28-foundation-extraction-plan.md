@@ -1,6 +1,6 @@
 # Phase 1: Foundation & Extraction Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Stand up the project scaffold and Python extraction layer so that running one
 command pulls real data from all confirmed sources (NY Fed GSCPI, Bank of Canada Valet FX,
@@ -66,7 +66,7 @@ tests/test_extract.py
 - Produces: a working `uv` environment; `uv run pytest` and `uv run ruff check .` as the
   standard commands every later task uses.
 
-- [ ] **Step 1: Write `pyproject.toml`**
+- [x] **Step 1: Write `pyproject.toml`**
 
 ```toml
 [project]
@@ -107,14 +107,14 @@ build-backend = "hatchling.build"
 packages = ["src/pipeline"]
 ```
 
-- [ ] **Step 2: Create the package skeleton**
+- [x] **Step 2: Create the package skeleton**
 
 ```bash
 mkdir -p src/pipeline/sources tests
 touch src/pipeline/__init__.py src/pipeline/sources/__init__.py
 ```
 
-- [ ] **Step 3: Write a smoke test**
+- [x] **Step 3: Write a smoke test**
 
 ```python
 # tests/test_smoke.py
@@ -122,17 +122,17 @@ def test_smoke():
     assert True
 ```
 
-- [ ] **Step 4: Sync the environment and run the smoke test**
+- [x] **Step 4: Sync the environment and run the smoke test**
 
 Run: `uv sync && uv run pytest -v`
 Expected: `tests/test_smoke.py::test_smoke PASSED`, 1 passed.
 
-- [ ] **Step 5: Verify ruff runs clean**
+- [x] **Step 5: Verify ruff runs clean**
 
 Run: `uv run ruff check .`
 Expected: `All checks passed!`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add pyproject.toml src/pipeline tests/test_smoke.py .python-version 2>/dev/null; git add uv.lock
@@ -161,7 +161,7 @@ auto-selects the `xlrd` engine for this legacy format with no extra argument nee
   `{"month": date, "gscpi_value": float, "retrieved_at": datetime, "source_url": str}`
 - Produces: `GSCPI_URL: str` (module-level constant, used by later tasks/tests)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_nyfed.py
@@ -221,12 +221,12 @@ def test_fetch_gscpi_drops_blank_letterhead_rows(monkeypatch):
     assert rows[0]["month"] == date(1998, 1, 31)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_nyfed.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pipeline.sources.nyfed'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```python
 # src/pipeline/sources/nyfed.py
@@ -279,12 +279,12 @@ def fetch_gscpi(client: httpx.Client | None = None) -> list[dict]:
             client.close()
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest tests/test_nyfed.py -v`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pipeline/sources/nyfed.py tests/test_nyfed.py
@@ -310,7 +310,7 @@ spec, only pull from `2017-03-01` onward (the BoC methodology-change floor) usin
   `{"date": date, "usd_cad_rate": float, "retrieved_at": datetime, "source_url": str}`
 - Produces: `BOC_URL: str`, `BOC_RELIABLE_START_DATE = "2017-03-01"`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_boc.py
@@ -363,12 +363,12 @@ def test_fetch_fx_usd_cad_skips_missing_values():
     assert rows[0]["date"] == date(2026, 9, 25)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_boc.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pipeline.sources.boc'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```python
 # src/pipeline/sources/boc.py
@@ -417,12 +417,12 @@ def fetch_fx_usd_cad(client: httpx.Client | None = None) -> list[dict]:
             client.close()
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest tests/test_boc.py -v`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pipeline/sources/boc.py tests/test_boc.py
@@ -473,7 +473,7 @@ git commit -m "feat: add Bank of Canada Valet FX extraction"
   `CPI_COORDINATE = "2.139.0.0.0.0.0.0.0.0"` (module-level constants, used by later phases
   to build dbt sources).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_statcan.py
@@ -584,12 +584,12 @@ def test_fetch_clothing_cpi_returns_one_row_per_period(monkeypatch):
     assert rows[1]["cpi_index"] == 94.7
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_statcan.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pipeline.sources.statcan'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```python
 # src/pipeline/sources/statcan.py
@@ -690,12 +690,12 @@ def fetch_clothing_cpi(periods: int = 6) -> list[dict]:
     return rows
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest tests/test_statcan.py -v`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pipeline/sources/statcan.py tests/test_statcan.py
@@ -715,7 +715,7 @@ git commit -m "feat: add StatCan apparel trade and clothing CPI extraction"
 - Produces: `land_rows(con: duckdb.DuckDBPyConnection, table_name: str, rows: list[dict]) ->
   int`, used by Task 6's orchestrator and by every later phase that lands new raw data.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_land.py
@@ -757,12 +757,12 @@ def test_land_rows_handles_empty_input(tmp_path):
     assert ("raw_empty",) not in tables
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_land.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pipeline.land'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```python
 # src/pipeline/land.py
@@ -793,12 +793,12 @@ def land_rows(con: duckdb.DuckDBPyConnection, table_name: str, rows: list[dict])
     return len(df)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest tests/test_land.py -v`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pipeline/land.py tests/test_land.py
@@ -819,7 +819,7 @@ git commit -m "feat: add revision-safe DuckDB landing helper"
 - Produces: `run() -> dict[str, int]` (table name -> rows landed), `DB_PATH: pathlib.Path`.
   This is the entry point Phase 3's GitHub Actions workflow calls.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_extract.py
@@ -851,12 +851,12 @@ def test_run_lands_all_four_weekly_sources(monkeypatch, tmp_path):
     assert (tmp_path / "raw.duckdb").exists()
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `uv run pytest tests/test_extract.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pipeline.extract'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```python
 # src/pipeline/extract.py
@@ -895,24 +895,24 @@ if __name__ == "__main__":
     print(run())
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `uv run pytest tests/test_extract.py -v`
 Expected: 1 passed.
 
-- [ ] **Step 5: Run the full test suite and lint**
+- [x] **Step 5: Run the full test suite and lint**
 
 Run: `uv run pytest -v && uv run ruff check .`
 Expected: all tests passed, `All checks passed!`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/pipeline/extract.py tests/test_extract.py
 git commit -m "feat: add CLI orchestrator wiring the four weekly sources together"
 ```
 
-- [ ] **Step 7: Add `data/` (DuckDB output) to `.gitignore` and verify a live run**
+- [x] **Step 7: Add `data/` (DuckDB output) to `.gitignore` and verify a live run**
 
 ```bash
 printf '\n# local pipeline output\ndata/*.duckdb\ndata/*.duckdb.wal\n' >> .gitignore
@@ -958,7 +958,7 @@ weekly), scheduled separately in Phase 3.
   str, "import_value_cad": float, "retrieved_at": datetime, "source_url": str}`
 - Produces: `CIMT_ZIP_URL_TEMPLATE: str`, `APPAREL_HS2_CHAPTERS: dict[str, str]`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_cimt.py
@@ -1006,12 +1006,12 @@ def test_fetch_cimt_hs2_imports_filters_to_apparel_chapters():
     assert woven["import_value_cad"] == 75000.0
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `uv run pytest tests/test_cimt.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'pipeline.sources.cimt'`
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```python
 # src/pipeline/sources/cimt.py
@@ -1083,17 +1083,17 @@ def fetch_cimt_hs2_imports(year: int, client: httpx.Client | None = None) -> lis
             client.close()
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `uv run pytest tests/test_cimt.py -v`
 Expected: 1 passed.
 
-- [ ] **Step 5: Run the full test suite and lint one more time**
+- [x] **Step 5: Run the full test suite and lint one more time**
 
 Run: `uv run pytest -v && uv run ruff check .`
 Expected: all tests passed (12 total across all Task 1-7 tests), `All checks passed!`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/pipeline/sources/cimt.py tests/test_cimt.py
