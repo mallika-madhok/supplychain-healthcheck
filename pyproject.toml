@@ -8,7 +8,7 @@ dependencies = [
     "pandas>=2.2",
     "xlrd>=2.0",
     "stats-can>=3.3.0",
-    "duckdb>=1.0",
+    "duckdb>=1.0,<=1.5.5",  # MotherDuck extension lags DuckDB releases; pin to its latest supported version
 ]
 
 [dependency-groups]
