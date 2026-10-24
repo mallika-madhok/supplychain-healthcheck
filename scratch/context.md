@@ -2,25 +2,35 @@
 
 Paste/attach this file at the start of a new Claude Code session (on the MacBook, or
 anywhere else) to resume this project with full context. It's a snapshot of everything
-decided as of **2026-09-28**, session author: **Mallika** (GitHub: `mallika-madhok`).
+decided as of **2026-10-24** (originally written 2026-09-28; sections 0, 7, 8 and 9 updated
+after Phase 1 was completed and merged). Project owner: **Mallika** (GitHub:
+`mallika-madhok`).
 
 ## 0. First things to do in the new session
 
 1. `git clone https://github.com/mallika-madhok/supplychain-healthcheck.git`
-2. Read these two files in the repo — they're the source of truth, this document just
+2. Read these files in the repo — they're the source of truth, this document just
    summarizes and points to them:
    - `PROJECT_BRIEF.md` — the original brief (goals, constraints, candidate data sources)
    - `docs/superpowers/specs/2026-09-27-apparel-import-monitor-design.md` — the approved
      v1 architecture spec from the brainstorming session
-   - `docs/superpowers/plans/2026-09-28-foundation-extraction-plan.md` — the detailed,
-     ready-to-execute Phase 1 implementation plan (task-by-task, TDD, real verified code)
-3. Re-create `.env` locally (it's gitignored, never committed) with:
+   - `docs/superpowers/plans/2026-09-28-foundation-extraction-plan.md` — the Phase 1 plan
+     (**already executed and merged**; kept for reference)
+   - `scratch/flagged-to-explain.md` — a statistics caveat the author asked to have
+     explained in plain language when the backtest phase is reached
+3. Install `uv` (https://docs.astral.sh/uv/) if missing, then run `uv sync` in the repo
+   folder. This rebuilds `.venv` and downloads Python 3.12 (pinned in `.python-version`).
+   Check with `uv run pytest` (expect 14 passing) and `uv run ruff check .`.
+4. Re-create `.env` locally (it's gitignored, never committed) with:
    ```
    MOTHERDUCK_TOKEN=<your MotherDuck service account token>
    ```
    Paste the token yourself — don't have Claude read or type it, to keep it out of any
-   transcript.
-4. Set the GitHub Actions secret on the new machine if not already done:
+   transcript. Phase 1 doesn't need it; Phase 2 (dbt on MotherDuck) and the
+   `.mcp.json` MotherDuck server do.
+5. Optional: `uv run python -m pipeline.extract` recreates `data/raw.duckdb` from the live
+   sources (~1 minute). That file is gitignored, so it never needs copying between machines.
+6. Set the GitHub Actions secret on the new machine if not already done:
    ```
    gh secret set MOTHERDUCK_TOKEN --repo mallika-madhok/supplychain-healthcheck
    ```
@@ -139,30 +149,53 @@ if null/weak. No ML/forecasting in v1 — explicitly deferred.
 ## 7. Where things stand right now
 
 - **Brainstorming/design phase: complete.** Spec approved and committed.
-- **Phase 1 (Foundation & Extraction) plan: written, not yet executed.** Full task-by-task
-  TDD plan in `docs/superpowers/plans/2026-09-28-foundation-extraction-plan.md` — 7 tasks
-  covering project scaffold, NY Fed/BoC/StatCan/CIMT extraction modules, DuckDB landing
-  layer, and the CLI orchestrator. All code in the plan uses real, live-verified API
-  shapes — nothing in it is a guess.
-- **Not yet started**: actually executing Phase 1, and Phases 2-4 (dbt/MotherDuck
-  transformation, CI/export workflow, frontend) only exist as a one-paragraph-each
-  roadmap outline in conversation, not written plans yet.
+- **Phase 1 (Foundation & Extraction): DONE and merged to `master`** (PR #1, 2026-10-22).
+  14 tests pass, `ruff` clean, and every extractor was run against the live sources:
+  - NY Fed GSCPI: 345 months (1998-01 to 2026-09; peak +4.43 in 2021-12)
+  - Bank of Canada USD/CAD: 2,406 daily rows from 2017-03-01
+  - StatCan apparel trade (12-10-0176-01): 6 countries x 4 NAICS categories, latest N months
+  - StatCan clothing CPI (18-10-0004-01): latest N months
+  - CIMT HS2 bulk imports (chapters 61/62/64): 15,525 rows for 2026-01..08; standalone,
+    not part of the weekly run
+  - `uv run python -m pipeline.extract` lands the four weekly sources into
+    `data/raw.duckdb` (append-only, every row has `retrieved_at`)
+- **Not yet started**: Phase 2 (dbt + MotherDuck: staging, marts, z-scores, backtest),
+  Phase 3 (GitHub Actions weekly job + Parquet export), Phase 4 (static frontend with
+  DuckDB-Wasm). These only exist as one-paragraph outlines, not written plans.
 
-**Immediate next step when resuming**: decide execution approach for the Phase 1 plan —
-either subagent-driven (dispatch a fresh subagent per task with review between tasks) or
-inline execution in the session (batch execution with checkpoints). This choice was being
-asked when the session ended.
+**Immediate next step when resuming**: plan Phase 2 (brainstorm, then write a plan with
+the writing-plans skill), then execute it.
+
+**Lessons from Phase 1 to carry forward:**
+- `duckdb` is pinned to `<=1.5.5` in `pyproject.toml` because the MotherDuck extension
+  lags DuckDB releases. Don't unpin it casually.
+- The CIMT zip download (`www150.statcan.gc.ca`) dropped the connection once and worked on
+  an immediate retry. The Phase 3 scheduled job needs retries with backoff.
+- The weekly StatCan trade table covers only 6 countries, so shares computed from it are
+  not shares of all Canadian apparel imports. For the full-country import mix use the CIMT
+  HS2 data. State this on the methodology page.
+- Raw tables are append-only, so a re-run duplicates the full-history sources (GSCPI, FX).
+  The dbt staging layer must pick the latest `retrieved_at` per month/day.
+- Phase 1 was first rebuilt independently on a second machine, which caused conflicts at
+  merge time. Pull `master` before starting any new work, and work on a branch.
 
 ## 8. Repo layout so far
 
 ```
 PROJECT_BRIEF.md
-.env / .env.example / .gitignore
+.env / .env.example / .gitignore / .python-version / .mcp.json
+pyproject.toml / uv.lock
+src/pipeline/
+  extract.py                    # CLI: pulls the four weekly sources into data/raw.duckdb
+  land.py                       # append-only DuckDB landing helper
+  sources/{nyfed,boc,statcan,cimt}.py
+tests/                          # one test file per module, no live network calls
 docs/superpowers/specs/2026-09-27-apparel-import-monitor-design.md
 docs/superpowers/plans/2026-09-28-foundation-extraction-plan.md
 scratch/                       # informal working notes, not part of the portfolio proper
   data-notes.md                 # plain-language + technical walkthrough of the data/joins
   architecture-journey.html     # source for a published Claude artifact (see below)
+  flagged-to-explain.md         # backtest/time-series caveat to explain at the end
   context.md                    # this file
 ```
 
@@ -180,3 +213,14 @@ for "Pipeline Journey."
 - Prefers boring, well-documented, recognizable tools over clever ones — this shaped the
   GitHub Actions vs. Cloud Run/Workers decision.
 - Git commits should stay clean and small — commit history is part of the portfolio.
+- **The author is a total beginner and gets overwhelmed by terminology.** Explain in very
+  simple, low-jargon language with everyday analogies (the "kitchen" analogy worked well:
+  uv = shopper, tests = taste test, DuckDB = ledger book). Define a term once, say where
+  files live, and tie ideas back to intro-stats concepts they know (z-scores, normal
+  distribution, hypothesis testing). Keep replies short, and show real results from live
+  data rather than only describing code.
+- Build test-first (write the test, watch it fail, write the code, watch it pass) and
+  also run each piece against the real source, since mocked tests can't catch outages.
+- Merging to `master`, pushing and deleting branches are outward-facing: confirm first.
+- Standing request: when the backtest phase is reached, explain the autocorrelation /
+  Newey-West / small-sample caveat in `scratch/flagged-to-explain.md` in plain language.
