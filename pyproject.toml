@@ -9,6 +9,8 @@ dependencies = [
     "xlrd>=2.0",
     "stats-can>=3.3.0",
     "duckdb>=1.0,<=1.5.5",  # MotherDuck extension lags DuckDB releases; pin to its latest supported version
+    "dbt-core>=1.8",
+    "dbt-duckdb>=1.8",
 ]
 
 [dependency-groups]
