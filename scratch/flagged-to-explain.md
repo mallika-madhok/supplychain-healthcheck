@@ -14,3 +14,23 @@
 
 To do: explain this in very simple terms once the backtest phase is reached or the project is
 finished.
+
+## MotherDuck token exposure (flagged 2026-10-24)
+
+> `dbt debug` printed the full MotherDuck token into the terminal/session output while
+> setting up Phase 2. Author chose to continue and rotate later rather than stop and
+> rotate immediately.
+
+To do: remind the author to rotate the MotherDuck token (regenerate in the MotherDuck UI,
+update `.env` and the `MOTHERDUCK_TOKEN` GitHub Actions secret) before treating this
+project as done, since the old token is sitting in session history outside the repo.
+
+## CIMT null-country rows (flagged 2026-10-24)
+
+> ~114 raw CIMT rows (across both machines' pulls) have a blank country — likely StatCan
+> suppressing a confidential or unallocated amount. Confirmed negligible: ~$87K out of
+> ~$126B total import value (0.0001%) as of this date. Excluded in `stg_cimt` since a
+> country-level HHI can't attribute a share to an unknown country.
+
+To do: mention this exclusion on the methodology/data-quality notes page as a known,
+quantified limitation — not hidden, just small enough not to change the story.
