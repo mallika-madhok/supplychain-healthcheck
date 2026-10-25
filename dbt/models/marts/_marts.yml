@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: mart_freight_pressure
+    columns:
+      - name: month
+        tests: [not_null, unique]
+      - name: gscpi_zscore
+        tests: [not_null]
+
+  - name: mart_currency_exposure
+    columns:
+      - name: date
+        tests: [not_null, unique]
+
+  - name: mart_origin_concentration
+    columns:
+      - name: month
+        tests: [not_null]
+      - name: hs2_chapter
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["61", "62", "64"]
+      - name: hhi
+        tests: [not_null]

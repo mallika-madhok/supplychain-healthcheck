@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: stg_gscpi
+    columns:
+      - name: month
+        tests: [not_null, unique]
+      - name: gscpi_value
+        tests: [not_null]
+
+  - name: stg_fx
+    columns:
+      - name: date
+        tests: [not_null, unique]
+      - name: usd_cad_rate
+        tests: [not_null]
+
+  - name: stg_trade
+    columns:
+      - name: month
+        tests: [not_null]
+      - name: country
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - "Total of all countries"
+                - "Bangladesh"
+                - "Cambodia"
+                - "China"
+                - "India"
+                - "Indonesia"
+                - "Viet Nam"
+      - name: naics_category
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - "Apparel knitting mills"
+                - "Cut and sew clothing manufacturing"
+                - "Clothing accessories and other clothing manufacturing"
+                - "Footwear manufacturing"
+      - name: import_value_cad
+        tests: [not_null]
+
+  - name: stg_cpi
+    columns:
+      - name: month
+        tests: [not_null, unique]
+      - name: cpi_index
+        tests: [not_null]
+
+  - name: stg_cimt
+    columns:
+      - name: month
+        tests: [not_null]
+      - name: hs2_chapter
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["61", "62", "64"]
+      - name: country
+        tests: [not_null]
+      - name: import_value_cad
+        tests: [not_null]

@@ -1,0 +1,7 @@
+apparel_import_monitor:
+  target: motherduck
+  outputs:
+    motherduck:
+      type: duckdb
+      path: "md:apparel_import_monitor?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}"
+      threads: 4

@@ -1,0 +1,31 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: raw_gscpi
+        loaded_at_field: retrieved_at
+        freshness:
+          warn_after: { count: 10, period: day }
+          error_after: { count: 40, period: day }
+      - name: raw_fx
+        loaded_at_field: retrieved_at
+        freshness:
+          warn_after: { count: 10, period: day }
+          error_after: { count: 40, period: day }
+      - name: raw_trade
+        loaded_at_field: retrieved_at
+        freshness:
+          warn_after: { count: 10, period: day }
+          error_after: { count: 40, period: day }
+      - name: raw_cpi
+        loaded_at_field: retrieved_at
+        freshness:
+          warn_after: { count: 10, period: day }
+          error_after: { count: 40, period: day }
+      - name: raw_cimt
+        loaded_at_field: retrieved_at
+        freshness:
+          warn_after: { count: 120, period: day }
+          error_after: { count: 240, period: day }
