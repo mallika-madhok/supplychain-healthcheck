@@ -1,0 +1,246 @@
+/* Canadian Apparel Import Pressure Monitor — frontend styles */
+
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --border: #e3e1da;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #8a8880;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413;
+    --surface: #1a1a19;
+    --border: #30302c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8a8880;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141413;
+  --surface: #1a1a19;
+  --border: #30302c;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8a8880;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  padding-bottom: 60px;
+}
+
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+header.site {
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  margin-bottom: 24px;
+}
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+h1 { font-size: clamp(1.4rem, 4vw, 1.9rem); font-weight: 600; margin: 4px 0 6px; }
+.sub { color: var(--text-secondary); font-size: 0.92rem; max-width: 68ch; line-height: 1.5; }
+
+nav.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 18px 0 24px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+nav.tabs button {
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+nav.tabs button.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--series-1);
+}
+
+section.view { display: none; }
+section.view.active { display: block; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.card h2 { font-size: 1.05rem; margin: 0 0 6px; }
+.card .desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.stat-label { font-size: 0.74rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.3; }
+.stat-value {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.stat-tag {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 100px;
+  color: #fff;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.field .field-value { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+.field input[type="range"] { width: 100%; }
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.share-total {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+.share-total.warn { color: var(--status-serious); font-weight: 600; }
+
+.chart { width: 100%; height: 280px; min-width: 0; }
+
+details.sql-drawer {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--bg);
+}
+details.sql-drawer summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+details.sql-drawer pre {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin: 10px 0;
+  color: var(--text-primary);
+}
+.result-table-wrap { overflow-x: auto; }
+table.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.76rem;
+}
+table.result-table th, table.result-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+table.result-table th { color: var(--text-secondary); font-weight: 600; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 100px;
+  color: #fff;
+}
+
+.loading { color: var(--text-muted); font-size: 0.85rem; padding: 20px 0; }
+
+footer.site {
+  margin-top: 30px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.methodology p, .methodology li { font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); }
+.methodology h3 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--text-primary); }
+.methodology table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 10px 0; }
+.methodology table th, .methodology table td {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+}
+
+@media (max-width: 480px) {
+  .chart { height: 240px; }
+}
