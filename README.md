@@ -2,19 +2,19 @@
 
 **Try it live: https://mallika-madhok.github.io/supplychain-healthcheck/**
 
-## What this is
+## So, what is this?
 
 For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they do not control. Larger players have analysts tracking the forces behind them. A smaller importer usually finds out when a shipment is late or an invoice comes in higher than expected.
 
 This app gives you an early read on three signals, using free public data, based on your own mix of products, countries and currency:
 
-1. **Shipping pressure:** how strained global shipping is right now.
-2. **Currency:** how much the Canadian dollar has been moving against the US dollar.
+1. **Shipping pressure:** how delayed and expensive it is to move goods around the world, compared with normal.
+2. **Currency:** how much the price of a US dollar, in Canadian dollars, has been swinging. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price has not changed.
 3. **Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder one disruption hits you, whether that is a tariff change, a port strike or a factory shutdown.
 
 You get one headline score, **Low**, **Elevated** or **High**, plus a breakdown of which signal is driving it.
 
-## How to use it
+## How do I use it?
 
 1. Pick what you buy, like T-shirts, jeans or leather shoes.
 2. Say how much of your buying is paid in US dollars.
@@ -24,7 +24,14 @@ Move any slider and everything updates straight away.
 
 ## How the score is calculated
 
-Each signal is compared with its own history. The result is a **z-score**: how many "typical swings" today's value sits above or below its usual level. A z-score of 0 means normal, 1 means unusually high, and 2 or more means rare. Because every signal ends up on the same scale, the three can be averaged into one score.
+Each signal is compared with its own history, and the result is a **z-score**: how far today's value sits from its average, counted in standard deviations. A standard deviation is simply the size of a typical swing for that signal, which makes it a fair ruler for very different things like freight indexes and exchange rates.
+
+- **Around 0:** right at the average.
+- **Up to 1:** within a normal swing.
+- **2:** unusual. It happens, but not often.
+- **3 or more:** something is really off.
+
+Because every signal ends up on this one scale, the three can be averaged into a single score.
 
 | Signal | What is measured | Where the data comes from |
 |---|---|---|
