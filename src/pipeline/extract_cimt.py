@@ -1,4 +1,4 @@
-"""CLI entry point: pull CIMT HS2-level apparel imports for a set of years.
+"""CLI entry point: pull CIMT HS4-heading apparel imports for a set of years.
 
 Runs on its own slower cadence, separate from extract.py's weekly sources, since the
 Open Government Portal only publishes new CIMT batches a few times a year.
@@ -12,7 +12,7 @@ import duckdb
 import httpx
 
 from pipeline.land import land_rows
-from pipeline.sources.cimt import fetch_cimt_hs2_imports
+from pipeline.sources.cimt import fetch_cimt_hs4_imports
 
 DB_PATH = pathlib.Path("data/raw.duckdb")
 
@@ -20,7 +20,7 @@ DEFAULT_YEARS = [2023, 2024, 2025, 2026]
 
 
 def run(years: list[int] | None = None) -> dict[int, int | None]:
-    """Pull CIMT HS2-level imports for each year and land them.
+    """Pull CIMT HS4-heading imports for each year and land them.
 
     Returns rows landed per year, or None for a year whose fetch failed after a retry
     (e.g. no batch published yet, or a dropped connection) so one bad year doesn't stop
@@ -36,14 +36,14 @@ def run(years: list[int] | None = None) -> dict[int, int | None]:
             rows = None
             for _attempt in range(2):
                 try:
-                    rows = fetch_cimt_hs2_imports(year)
+                    rows = fetch_cimt_hs4_imports(year)
                     break
                 except httpx.HTTPError:
                     continue
             if rows is None:
                 counts[year] = None
                 continue
-            counts[year] = land_rows(con, "raw_cimt", rows)
+            counts[year] = land_rows(con, "raw_cimt_hs4", rows)
         return counts
     finally:
         con.close()

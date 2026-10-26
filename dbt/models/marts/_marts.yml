@@ -13,14 +13,26 @@ models:
       - name: date
         tests: [not_null, unique]
 
+  - name: mart_country_shares
+    columns:
+      - name: month
+        tests: [not_null]
+      - name: category_code
+        tests: [not_null]
+      - name: country
+        tests: [not_null]
+      - name: country_share
+        tests: [not_null]
+
   - name: mart_origin_concentration
     columns:
       - name: month
         tests: [not_null]
-      - name: hs2_chapter
+      - name: category_code
+        tests: [not_null]
+      - name: category_level
         tests:
-          - not_null
           - accepted_values:
-              values: ["61", "62", "64"]
+              values: ["heading", "chapter"]
       - name: hhi
         tests: [not_null]

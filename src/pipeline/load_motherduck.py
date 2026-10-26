@@ -18,7 +18,7 @@ import duckdb
 DB_PATH = pathlib.Path("data/raw.duckdb")
 MOTHERDUCK_DATABASE = "apparel_import_monitor"
 
-RAW_TABLES = ["raw_gscpi", "raw_fx", "raw_trade", "raw_cpi", "raw_cimt"]
+RAW_TABLES = ["raw_gscpi", "raw_fx", "raw_trade", "raw_cpi", "raw_cimt_hs4"]
 
 
 def run() -> dict[str, int]:

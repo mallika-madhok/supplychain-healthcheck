@@ -24,7 +24,7 @@ sources:
         freshness:
           warn_after: { count: 10, period: day }
           error_after: { count: 40, period: day }
-      - name: raw_cimt
+      - name: raw_cimt_hs4
         loaded_at_field: retrieved_at
         freshness:
           warn_after: { count: 120, period: day }

@@ -20,6 +20,7 @@ MARTS = [
     "mart_freight_pressure",
     "mart_currency_exposure",
     "mart_origin_concentration",
+    "mart_country_shares",
 ]
 
 

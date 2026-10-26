@@ -244,3 +244,72 @@ footer.site {
 @media (max-width: 480px) {
   .chart { height: 240px; }
 }
+
+/* ---- profile ---- */
+.profile-top {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 6px;
+}
+.field-title { font-size: 0.82rem; font-weight: 600; margin: 8px 0 10px; }
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--series-1); }
+
+/* ---- hero ---- */
+.hero-main { display: grid; gap: 14px; }
+.hero-score {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 2.6rem;
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.hero-unit { font-size: 1.2rem; }
+.hero-deltas {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--text-secondary);
+}
+.hero-summary { margin: 0; font-size: 0.95rem; line-height: 1.55; color: var(--text-secondary); max-width: 72ch; }
+.stat-note { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; }
+.chart.tall { height: 320px; }
+
+/* ---- driver cards ---- */
+.driver {
+  display: grid;
+  grid-template-columns: 28px 1fr 130px auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.driver:last-child { border-bottom: none; }
+.driver-rank {
+  font-family: "IBM Plex Mono", monospace; font-weight: 600; color: var(--text-muted);
+  font-size: 1.1rem;
+}
+.driver-desc { font-size: 0.8rem; color: var(--text-secondary); margin: 2px 0 4px; line-height: 1.4; }
+.driver a { font-size: 0.78rem; color: var(--series-1); text-decoration: none; }
+.driver a:hover { text-decoration: underline; }
+.driver-spark { height: 44px; width: 130px; }
+.driver-value { font-size: 1.1rem; }
+
+@media (max-width: 640px) {
+  .driver { grid-template-columns: 24px 1fr; }
+  .driver-spark { grid-column: 2; width: 100%; }
+  .driver-value { grid-column: 2; }
+  .hero-score { font-size: 2.1rem; }
+}

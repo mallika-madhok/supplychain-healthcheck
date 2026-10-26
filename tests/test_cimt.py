@@ -10,16 +10,17 @@ from pipeline.sources import cimt
 def _build_zip(csv_content: str) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
-        archive.writestr("CIMT-CICM_Imp_2026/ODPFN022_202601N.csv", csv_content)
+        archive.writestr("CIMT-CICM_Imp_2026/ODPFN015_202601N.csv", csv_content)
     return buffer.getvalue()
 
 
-def test_fetch_cimt_hs2_imports_filters_to_apparel_chapters():
+def test_fetch_cimt_hs4_imports_filters_and_aggregates_to_headings():
     csv_content = (
-        "YearMonth/AnnéeMois,HS2,Country/Pays,Province,State/État,Value/Valeur\n"
-        '"202601","61","BD","ON",,50000\n'
-        '"202601","62","VN","BC",,75000\n'
-        '"202601","01","AU","BC",,42472\n'
+        "YearMonth/AnnéeMois,HS6,Country/Pays,Province,State/État,Value/Valeur,Quantity,Unit\n"
+        '"202601","610910","BD","ON",,50000,1,"NMB"\n'
+        '"202601","610990","BD","BC",,25000,1,"NMB"\n'
+        '"202601","620342","VN","BC",,75000,1,"NMB"\n'
+        '"202601","010121","AU","BC",,42472,1,"NMB"\n'
     )
     zip_bytes = _build_zip(csv_content)
 
@@ -28,15 +29,15 @@ def test_fetch_cimt_hs2_imports_filters_to_apparel_chapters():
         return httpx.Response(200, content=zip_bytes)
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    rows = cimt.fetch_cimt_hs2_imports(2026, client=client)
+    rows = cimt.fetch_cimt_hs4_imports(2026, client=client)
 
     assert len(rows) == 2
-    knit = next(r for r in rows if r["hs2_chapter"] == "61")
-    assert knit["month"] == date(2026, 1, 1)
-    assert knit["country"] == "BD"
-    assert knit["import_value_cad"] == 50000.0
-    assert knit["hs2_label"] == "Apparel and clothing accessories, knitted or crocheted"
+    tshirts = next(r for r in rows if r["hs4"] == "6109")
+    assert tshirts["month"] == date(2026, 1, 1)
+    assert tshirts["country"] == "BD"
+    assert tshirts["import_value_cad"] == 75000.0  # two HS6 lines summed into one heading
+    assert tshirts["hs2_chapter"] == "61"
 
-    woven = next(r for r in rows if r["hs2_chapter"] == "62")
-    assert woven["country"] == "VN"
-    assert woven["import_value_cad"] == 75000.0
+    trousers = next(r for r in rows if r["hs4"] == "6203")
+    assert trousers["country"] == "VN"
+    assert trousers["import_value_cad"] == 75000.0

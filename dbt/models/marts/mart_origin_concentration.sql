@@ -1,47 +1,44 @@
 -- Origin concentration: Herfindahl-Hirschman Index (HHI) of the Canadian import mix,
--- per month and HS2 apparel chapter, from the full-country CIMT data (not the 6-country
--- StatCan trade table, which would understate concentration since it excludes most
--- countries). Each chapter's HHI series is z-scored against its own history, since
--- "concentrated" means something different for knit apparel vs. footwear.
+-- per month and product category (HS4 heading or HS chapter roll-up), from the full-country
+-- CIMT data (not the 6-country StatCan trade table, which would understate concentration
+-- since it excludes most countries). Each category's HHI series is z-scored against its
+-- own history, since "concentrated" means something different for T-shirts vs. footwear.
+-- Also exposes the mean and stdev so the browser can z-score a visitor's own mix against
+-- the same benchmark.
 
-with shares as (
+with hhi as (
     select
         month,
-        hs2_chapter,
-        hs2_label,
-        country,
-        import_value_cad,
-        import_value_cad / sum(import_value_cad) over (
-            partition by month, hs2_chapter
-        ) as country_share
-    from {{ ref('stg_cimt') }}
-),
-
-hhi as (
-    select
-        month,
-        hs2_chapter,
-        hs2_label,
+        category_code,
+        category_label,
+        category_level,
+        sum(import_value_cad) as import_value_cad,
+        count(*) as country_count,
         sum(country_share * country_share) as hhi
-    from shares
-    group by month, hs2_chapter, hs2_label
+    from {{ ref('mart_country_shares') }}
+    group by month, category_code, category_label, category_level
 ),
 
 stats as (
     select
-        hs2_chapter,
-        avg(hhi) as mean_hhi,
-        stddev_samp(hhi) as stdev_hhi
+        category_code,
+        avg(hhi) as hhi_mean,
+        stddev_samp(hhi) as hhi_stdev
     from hhi
-    group by hs2_chapter
+    group by category_code
 )
 
 select
     h.month,
-    h.hs2_chapter,
-    h.hs2_label,
+    h.category_code,
+    h.category_label,
+    h.category_level,
+    h.import_value_cad,
+    h.country_count,
     h.hhi,
-    (h.hhi - s.mean_hhi) / s.stdev_hhi as hhi_zscore
+    s.hhi_mean,
+    s.hhi_stdev,
+    (h.hhi - s.hhi_mean) / nullif(s.hhi_stdev, 0) as hhi_zscore
 from hhi as h
-inner join stats as s using (hs2_chapter)
-order by h.hs2_chapter, h.month
+inner join stats as s using (category_code)
+order by h.category_code, h.month

@@ -54,11 +54,13 @@ models:
     columns:
       - name: month
         tests: [not_null]
+      - name: hs4
+        tests: [not_null]
       - name: hs2_chapter
         tests:
           - not_null
           - accepted_values:
-              values: ["61", "62", "64"]
+              values: ["42", "61", "62", "64", "65"]
       - name: country
         tests: [not_null]
       - name: import_value_cad
