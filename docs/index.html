@@ -6,7 +6,7 @@
   <title>Canadian Apparel Import Pressure Monitor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%236b1d2e%27/%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Open+Sans:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="styles.css?v=202610251946">
+  <link rel="stylesheet" href="styles.css?v=202610251950">
 </head>
 <body>
   <header class="masthead">
@@ -109,8 +109,9 @@
         </details>
       </div>
       <div class="card">
-        <h2>Shipping over the last 10 years</h2>
+        <h2>Shipping over time</h2>
         <div class="desc">Each point is one month of the New York Fed's Global Supply Chain Pressure Index, which blends freight costs with delivery times, order backlogs and stock levels across major economies. The coloured bands match the status labels: green is normal, amber is worse than usual, red is much worse.</div>
+        <div class="range" id="range-freight"></div>
         <div class="chart tall" id="chart-freight"></div>
         <details class="sql-drawer">
           <summary>See the data and SQL behind this</summary>
@@ -131,8 +132,9 @@
         </details>
       </div>
       <div class="card">
-        <h2>The exchange rate over the last five years</h2>
+        <h2>The exchange rate over time</h2>
         <div class="desc">How many Canadian dollars one US dollar costs. When the line goes up, anything you pay for in US dollars costs you more.</div>
+        <div class="range" id="range-rate"></div>
         <div class="chart tall" id="chart-rate"></div>
         <details class="sql-drawer">
           <summary>How the status is worked out</summary>
@@ -151,7 +153,8 @@
       </div>
       <div class="card">
         <h2>Your mix compared with Canada's</h2>
-        <div class="desc">Where Canada's imports of this product come from (latest 12 months of data) next to your own mix. If Canada already buys a lot from a country you don't use, that country is a proven option for this product.</div>
+        <div class="desc">Where Canada's imports of this product come from over the window you pick, next to your own mix. Import records start in January 2023. If Canada already buys a lot from a country you don't use, that country is a proven option for this product.</div>
+        <div class="range" id="range-origin"></div>
         <div class="chart" id="chart-mix"></div>
         <details class="sql-drawer">
           <summary>See the data and SQL behind this</summary>
@@ -160,7 +163,7 @@
         </details>
         <details class="sql-drawer">
           <summary>How concentrated Canada's imports have been over time</summary>
-          <div class="desc" style="margin-top:10px">The concentration score runs from near 0 (spread across many countries) to 1 (one country supplies everything). The dashed line is your mix.</div>
+          <div class="desc" style="margin-top:10px">The concentration score runs from near 0 (spread across many countries) to 1 (one country supplies everything). The dashed line is your mix. Uses the same time window as the chart above.</div>
           <div class="chart" id="chart-origin"></div>
           <pre id="sql-origin"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-origin"></table></div>
@@ -199,8 +202,8 @@
         <ul>
           <li><strong>Shipping.</strong> The New York Fed's Global Supply Chain Pressure Index, compared
           with its full history since 1998. The longer record matters here: the last 10 years include the
-          2021&ndash;22 crisis, which on its own would make real strain look normal. The chart and the
-          ranking ("tighter than X% of months") cover the last 10 years, and whether it has been rising or easing over the last three months. This
+          2021&ndash;22 crisis, which on its own would make real strain look normal. The ranking ("tighter than X% of months") covers the last 10 years,
+          and the charts show 10 years by default, with quick picks and a date range to zoom in, and whether it has been rising or easing over the last three months. This
           is global, so it is the same for every business.</li>
           <li><strong>Currency.</strong> Two measures of the US/Canadian dollar rate, each compared with
           history since 2017 and averaged for the status: how far the rate has moved over the
@@ -254,6 +257,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
-  <script type="module" src="app.js?v=202610251946"></script>
+  <script type="module" src="app.js?v=202610251950"></script>
 </body>
 </html>

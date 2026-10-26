@@ -259,18 +259,110 @@ function categoryLabel(code) {
   return c ? c.category_label : code;
 }
 
+// ---------- time windows ----------
+// Quick picks are tailored to each series: the exchange rate is daily, so a week makes
+// sense; shipping and supplier data are monthly (and supplier data only starts in 2023).
+const WINDOWS = {
+  freight: { options: [["6M", { months: 6 }], ["1Y", { months: 12 }], ["3Y", { months: 36 }], ["5Y", { months: 60 }], ["10Y", { months: 120 }]], initial: "10Y", monthly: true },
+  rate: { options: [["1W", { days: 7 }], ["1M", { months: 1 }], ["3M", { months: 3 }], ["6M", { months: 6 }], ["1Y", { months: 12 }], ["5Y", { months: 60 }]], initial: "1Y", monthly: false },
+  origin: { options: [["3M", { months: 3 }], ["6M", { months: 6 }], ["1Y", { months: 12 }], ["All", null]], initial: "1Y", monthly: true },
+};
+const bounds = {};   // earliest and latest date per series, ISO strings
+const windows = {};  // current { from, to } per series
+
+function isoToUtc(iso) {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+function utcToIso(d) {
+  return d.toISOString().slice(0, 10);
+}
+function prettyDate(iso, monthly) {
+  return isoToUtc(iso).toLocaleDateString("en-CA", monthly
+    ? { month: "short", year: "numeric", timeZone: "UTC" }
+    : { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+}
+
+function spanToWindow(key, span) {
+  const { min, max } = bounds[key];
+  if (!span) return { from: min, to: max };
+  const end = isoToUtc(max);
+  let start;
+  if (span.days) {
+    start = new Date(end); start.setUTCDate(start.getUTCDate() - span.days);
+  } else if (WINDOWS[key].monthly) {
+    // N monthly points ending at the latest month
+    start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - (span.months - 1), 1));
+  } else {
+    start = new Date(end); start.setUTCMonth(start.getUTCMonth() - span.months);
+  }
+  const from = utcToIso(start);
+  return { from: from < min ? min : from, to: max };
+}
+
+// For monthly series, compare whole months so month-end and month-start dates both fit.
+function windowFilter(key, column) {
+  const { from, to } = windows[key];
+  return WINDOWS[key].monthly
+    ? `date_trunc('month', ${column}) between date_trunc('month', date '${from}') and date '${to}'`
+    : `${column} between date '${from}' and date '${to}'`;
+}
+
+function buildRangeControl(key, onChange) {
+  const el = document.getElementById(`range-${key}`);
+  const cfg = WINDOWS[key];
+  const { min, max } = bounds[key];
+  el.innerHTML =
+    `<div class="range-quick">${cfg.options.map(([label]) => `<button type="button" class="chip" data-span="${label}">${label}</button>`).join("")}</div>` +
+    `<div class="range-custom"><label>From <input type="date" min="${min}" max="${max}" data-end="from"></label>` +
+    `<label>To <input type="date" min="${min}" max="${max}" data-end="to"></label></div>` +
+    `<div class="range-label"></div>`;
+  const sync = (active) => {
+    el.querySelectorAll(".chip").forEach((b) => b.classList.toggle("active", b.dataset.span === active));
+    el.querySelector('[data-end="from"]').value = windows[key].from;
+    el.querySelector('[data-end="to"]').value = windows[key].to;
+    el.querySelector(".range-label").textContent =
+      `Showing ${prettyDate(windows[key].from, cfg.monthly)} to ${prettyDate(windows[key].to, cfg.monthly)}`;
+  };
+  el.querySelectorAll(".chip").forEach((b) =>
+    b.addEventListener("click", () => {
+      windows[key] = spanToWindow(key, cfg.options.find(([l]) => l === b.dataset.span)[1]);
+      sync(b.dataset.span);
+      onChange();
+    })
+  );
+  el.querySelectorAll("input[type=date]").forEach((input) =>
+    input.addEventListener("change", () => {
+      let from = el.querySelector('[data-end="from"]').value || min;
+      let to = el.querySelector('[data-end="to"]').value || max;
+      if (from > to) [from, to] = [to, from];
+      windows[key] = { from: from < min ? min : from, to: to > max ? max : to };
+      sync(null);
+      onChange();
+    })
+  );
+  windows[key] = spanToWindow(key, cfg.options.find(([l]) => l === cfg.initial)[1]);
+  sync(cfg.initial);
+}
+
 // ---------- queries ----------
 
-const FREIGHT_SQL = `-- Last 10 years. The z-score itself is measured against the full record since 1998.
+function freightSql() {
+  return `-- Shipping pressure in the window you picked. The z-score itself is measured against the full record since 1998.
 select strftime(month, '%Y-%m-%d') as month, gscpi_value, gscpi_zscore
 from read_parquet('mart_freight_pressure.parquet')
-where month > (select max(month) from read_parquet('mart_freight_pressure.parquet')) - interval 10 year
+where ${windowFilter("freight", "month")}
 order by month`;
+}
 
-const CURRENCY_SQL = `select strftime(date, '%Y-%m-%d') as date, usd_cad_rate, level_change_zscore, volatility_zscore
+function currencySql() {
+  return `-- Exchange rate and its two z-scores in the window you picked
+select strftime(date, '%Y-%m-%d') as date, usd_cad_rate, level_change_zscore, volatility_zscore
 from read_parquet('mart_currency_exposure.parquet')
 where level_change_zscore is not null and volatility_zscore is not null
+  and ${windowFilter("rate", "date")}
 order by date`;
+}
 
 function shipSql() {
   return `-- Where shipping pressure stands today, and how it ranks against the last 10 years
@@ -313,6 +405,31 @@ select strftime((select d from latest), '%Y-%m-%d') as as_of,
        ${Math.round(spend)} * (now_rate.r / year_ago.r - 1) as extra_cost_vs_year_ago,
        ${Math.round(spend)} * swing.s as cost_of_a_typical_swing
 from now_rate, year_ago, swing`;
+}
+
+function originWindowSql(profile) {
+  return `-- Concentration of Canada's imports of this product in the window you picked
+select strftime(month, '%Y-%m-%d') as month, category_label, country_count, hhi, hhi_zscore
+from read_parquet('mart_origin_concentration.parquet')
+where category_code = ${sqlStr(profile.category)}
+  and ${windowFilter("origin", "month")}
+order by month`;
+}
+
+function mixWindowSql(profile) {
+  const named = NAMED_CODES.map(sqlStr).join(", ");
+  return `-- Canada's imports of this product by country of origin, in the window you picked
+with totals as (
+  select case when country in (${named}) then country else 'OTHER' end as country,
+         sum(import_value_cad) as value
+  from read_parquet('mart_country_shares.parquet')
+  where category_code = ${sqlStr(profile.category)}
+    and ${windowFilter("origin", "month")}
+  group by 1
+)
+select country, round(100 * value / sum(value) over (), 1) as canada_share_pct
+from totals
+order by canada_share_pct desc`;
 }
 
 function originSql(profile) {
@@ -514,28 +631,44 @@ function note(x, y, text, ay = -34) {
   };
 }
 
-function renderStaticCharts(freightRows, currencyRows) {
-  const months = freightRows.map((r) => r.month);
-  const fz = freightRows.map((r) => r.gscpi_zscore);
+async function drawFreight() {
+  const sql = freightSql();
+  const rows = await runQuery(sql);
+  show("sql-freight", "table-freight", sql, rows);
+  if (!rows.length) return;
+  // The index is dated at month-end; plot each point at the start of its month so axis labels line up.
+  const months = rows.map((r) => r.month.slice(0, 7) + "-01");
+  const fz = rows.map((r) => r.gscpi_zscore);
   const peak = fz.indexOf(Math.max(...fz));
-  const lastF = fz.length - 1;
+  const last = fz.length - 1;
+  const notes = [];
+  if (fz[peak] > 3 && months[peak] >= "2021-01-01" && months[peak] <= "2022-12-31") {
+    notes.push(note(months[peak], fz[peak], "2021–22 shipping crisis", -26));
+  }
+  if (windows.freight.to === bounds.freight.max) notes.push(note(months[last], fz[last], "Latest", -40));
   plot(
     "chart-freight",
-    [line(months, fz, "Shipping", cssVar("--maroon-line"), { hovertemplate: "%{x|%b %Y}: %{y:.2f}<extra></extra>" })],
+    [line(months, fz, "Shipping", cssVar("--maroon-line"), {
+      mode: rows.length < 40 ? "lines+markers" : "lines", marker: { size: 5 },
+      hovertemplate: "%{x|%b %Y}: %{y:.2f}<extra></extra>",
+    })],
     baseLayout({
       showlegend: false,
-      yaxis: { ...zAxis("tighter than usual →"), range: [Math.min(...fz) - 0.3, Math.max(...fz) + 0.6] },
+      yaxis: { ...zAxis("tighter than usual →"), range: [Math.min(-1, ...fz) - 0.3, Math.max(2.3, ...fz) + 0.6] },
       shapes: zoneShapes(),
-      annotations: [
-        note(months[peak], fz[peak], "2021–22 shipping crisis", -26),
-        note(months[lastF], fz[lastF], "Today", -40),
-      ],
+      annotations: notes,
     })
   );
+}
 
-  const dates = currencyRows.map((r) => r.date);
-  const lz = currencyRows.map((r) => r.level_change_zscore);
-  const vz = currencyRows.map((r) => r.volatility_zscore);
+async function drawRate() {
+  const sql = currencySql();
+  const rows = await runQuery(sql);
+  show("sql-currency", "table-currency", sql, rows);
+  if (!rows.length) return;
+  const dates = rows.map((r) => r.date);
+  const lz = rows.map((r) => r.level_change_zscore);
+  const vz = rows.map((r) => r.volatility_zscore);
   const all = lz.concat(vz);
   plot(
     "chart-currency",
@@ -543,31 +676,39 @@ function renderStaticCharts(freightRows, currencyRows) {
       line(dates, lz, "Moved a lot lately", cssVar("--series-1")),
       line(dates, vz, "Been jumpy", cssVar("--series-2")),
     ],
-    baseLayout({ yaxis: { ...zAxis("more unusual →"), range: [Math.min(...all) - 0.3, Math.max(...all) + 0.3] }, shapes: zoneShapes() })
+    baseLayout({ yaxis: { ...zAxis("more unusual →"), range: [Math.min(-1, ...all) - 0.3, Math.max(2.3, ...all) + 0.3] }, shapes: zoneShapes() })
   );
 
-  // Exchange rate, last five years, with today and a year ago marked.
-  const lastDate = new Date(dates[dates.length - 1]);
-  const fiveYears = new Date(lastDate); fiveYears.setFullYear(lastDate.getFullYear() - 5);
-  const yearAgo = new Date(lastDate); yearAgo.setFullYear(lastDate.getFullYear() - 1);
-  const recent = currencyRows.filter((r) => new Date(r.date) >= fiveYears);
-  const ago = currencyRows.filter((r) => new Date(r.date) <= yearAgo).pop();
-  const now = currencyRows[currencyRows.length - 1];
+  // Mark today and a year ago when they fall inside the window.
+  const marks = [];
+  const notes = [];
+  const now = rows[rows.length - 1];
+  const yearAgo = isoToUtc(bounds.rate.max); yearAgo.setUTCFullYear(yearAgo.getUTCFullYear() - 1);
+  const yearAgoIso = utcToIso(yearAgo);
+  const weekBefore = new Date(yearAgo); weekBefore.setUTCDate(weekBefore.getUTCDate() - 7);
+  const ago = rows.filter((r) => r.date <= yearAgoIso).pop();
+  if (ago && ago.date >= utcToIso(weekBefore)) {
+    marks.push(ago);
+    notes.push(note(ago.date, ago.usd_cad_rate, `A year ago: ${fmt(ago.usd_cad_rate, 3)}`, 36));
+  }
+  if (windows.rate.to === bounds.rate.max) {
+    marks.push(now);
+    notes.push(note(now.date, now.usd_cad_rate, `Latest: ${fmt(now.usd_cad_rate, 3)}`, -36));
+  }
   plot(
     "chart-rate",
     [
-      line(recent.map((r) => r.date), recent.map((r) => r.usd_cad_rate), "CAD per USD", cssVar("--series-3"),
-        { hovertemplate: "%{x|%d %b %Y}: %{y:.3f} CAD<extra></extra>" }),
-      { x: [ago.date, now.date], y: [ago.usd_cad_rate, now.usd_cad_rate], type: "scatter", mode: "markers",
+      line(dates, rows.map((r) => r.usd_cad_rate), "CAD per USD", cssVar("--series-3"), {
+        mode: rows.length < 40 ? "lines+markers" : "lines", marker: { size: 5 },
+        hovertemplate: "%{x|%d %b %Y}: %{y:.3f} CAD<extra></extra>",
+      }),
+      { x: marks.map((r) => r.date), y: marks.map((r) => r.usd_cad_rate), type: "scatter", mode: "markers",
         marker: { size: 9, color: cssVar("--maroon-line") }, hoverinfo: "skip" },
     ],
     baseLayout({
       showlegend: false,
       yaxis: { gridcolor: cssVar("--border"), title: "Canadian dollars per US dollar" },
-      annotations: [
-        note(ago.date, ago.usd_cad_rate, `A year ago: ${fmt(ago.usd_cad_rate, 3)}`, 36),
-        note(now.date, now.usd_cad_rate, `Today: ${fmt(now.usd_cad_rate, 3)}`, -36),
-      ],
+      annotations: notes,
     })
   );
 }
@@ -625,9 +766,17 @@ function renderShiftCard(profile, r, hhi, marketHhi, originZ) {
     (r.consider ? `<div class="consider${r.label === "All clear" ? " clear" : ""}"><span class="consider-label">${r.label}</span>${r.consider}</div>` : "");
 }
 
-function renderOriginCharts(profile, hhi, originRows, mix) {
+let originToken = 0;
+async function drawOrigin(profile) {
+  const token = ++originToken;
+  const hhi = userHhi(profile);
+  const oSql = originWindowSql(profile);
+  const mSql = mixWindowSql(profile);
+  const [originRows, mix] = await Promise.all([runQuery(oSql), runQuery(mSql)]);
+  if (token !== originToken) return;
   document.getElementById("origin-cat-name").textContent = categoryLabel(profile.category);
-  show("sql-origin", "table-origin", originSql(profile), originRows);
+  show("sql-origin", "table-origin", oSql, originRows);
+  show("sql-mix", "table-mix", mSql, mix, 20);
 
   const x = originRows.map((r) => r.month);
   const traces = [line(x, originRows.map((r) => r.hhi), "Canada's imports", cssVar("--series-3"), {
@@ -642,7 +791,6 @@ function renderOriginCharts(profile, hhi, originRows, mix) {
   }
   plot("chart-origin", traces, baseLayout({ yaxis: { gridcolor: cssVar("--border"), title: "Concentration score" } }));
 
-  show("sql-mix", "table-mix", mixSql(profile), mix, 20);
   const canada = Object.fromEntries(mix.map((r) => [r.country, r.canada_share_pct]));
   const total = totalShare(profile) || 1;
   const labels = COUNTRIES.map((c) => c.label);
@@ -727,7 +875,7 @@ async function renderResults(profile) {
   renderFxDetail(fx, fxR, profile);
   renderShiftCard(profile, supR, hhi, marketHhi, originZ);
 
-  renderOriginCharts(profile, hhi, originRows, mix);
+  drawOrigin(profile);
 }
 
 // ---------- profile controls ----------
@@ -902,14 +1050,22 @@ async function main() {
     })
   );
 
-  // Static (profile-independent) series
-  const [freightRows, currencyRows] = await Promise.all([runQuery(FREIGHT_SQL), runQuery(CURRENCY_SQL)]);
-  show("sql-freight", "table-freight", FREIGHT_SQL, freightRows);
-  show("sql-currency", "table-currency", CURRENCY_SQL, currencyRows);
-  renderStaticCharts(freightRows, currencyRows);
+  // Data ranges for the time-window controls
+  const [[fb], [rb], [ob]] = await Promise.all([
+    runQuery(`select strftime(min(month), '%Y-%m-%d') as min, strftime(max(month), '%Y-%m-%d') as max from read_parquet('mart_freight_pressure.parquet')`),
+    runQuery(`select strftime(min(date), '%Y-%m-%d') as min, strftime(max(date), '%Y-%m-%d') as max from read_parquet('mart_currency_exposure.parquet') where level_change_zscore is not null and volatility_zscore is not null`),
+    runQuery(`select strftime(min(month), '%Y-%m-%d') as min, strftime(max(month), '%Y-%m-%d') as max from read_parquet('mart_country_shares.parquet')`),
+  ]);
+  bounds.freight = fb;
+  bounds.rate = rb;
+  bounds.origin = ob;
+  buildRangeControl("freight", drawFreight);
+  buildRangeControl("rate", drawRate);
+  buildRangeControl("origin", () => drawOrigin(profile));
+  await Promise.all([drawFreight(), drawRate()]);
 
   document.getElementById("data-through").textContent =
-    `Shipping data through ${freightRows[freightRows.length - 1].month.slice(0, 7)}; exchange rates through ${currencyRows[currencyRows.length - 1].date}.`;
+    `Shipping data through ${prettyDate(fb.max, true)}; exchange rates through ${prettyDate(rb.max, false)}; import records through ${prettyDate(ob.max, true)}.`;
 
   document.querySelectorAll("nav.tabs button").forEach((btn) =>
     btn.addEventListener("click", () => switchTab(btn.dataset.tab))

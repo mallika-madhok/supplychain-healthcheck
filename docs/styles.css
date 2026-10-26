@@ -862,3 +862,24 @@ nav.tabs button .mini-ic svg { width: 13px; height: 13px; }
 
 .consider.clear { border-left-color: var(--status-good); }
 .consider.clear .consider-label { color: var(--status-good); }
+
+/* ===== Time-window controls ===== */
+.range {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  margin: 4px 0 6px;
+}
+.range-quick { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--pink-soft); border: 1px solid var(--border); }
+.chip {
+  border: none; background: none; cursor: pointer;
+  padding: 5px 12px; border-radius: 999px;
+  font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);
+}
+.chip:hover { color: var(--accent); }
+.chip.active { background: var(--accent); color: #fff; }
+.range-custom { display: inline-flex; gap: 10px; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-secondary); }
+.range-custom label { display: inline-flex; align-items: center; gap: 6px; }
+.range-custom input[type="date"] {
+  font: inherit; font-size: 0.8rem; color: var(--text-primary);
+  padding: 4px 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+}
+.range-label { flex-basis: 100%; font-size: 0.76rem; color: var(--text-muted); }

@@ -30,7 +30,7 @@ Each one gets a status (Normal, Worse than usual or Much worse than usual), a sc
 2. Enter your monthly purchases and the share paid in US dollars.
 3. Say roughly where your goods come from, by country.
 
-Only the countries you add get a slider. Move anything and the answers update straight away. Not sure where to start? There are starting points for "what Canada as a whole imports", "one country does most of it" and "spread across many".
+Only the countries you add get a slider. Move anything and the answers update straight away. Each chart has quick time windows (like 6M, 1Y or 5Y) tailored to how often that data updates, plus a date range if you want something specific. Not sure where to start? There are starting points for "what Canada as a whole imports", "one country does most of it" and "spread across many".
 
 ## How the answers are calculated
 
@@ -50,7 +50,7 @@ Below 1 is shown as **Normal**, 1 to 2 as **Worse than usual**, and above 2 as *
 
 | Signal | What is measured | Where the data comes from |
 |---|---|---|
-| Shipping | The Global Supply Chain Pressure Index. The status is judged against its full history since 1998, because the last 10 years include the 2021–22 crisis, which on its own would make real strain look normal. The chart and the ranking cover the last 10 years, along with the change over the last three months | New York Fed |
+| Shipping | The Global Supply Chain Pressure Index. The status is judged against its full history since 1998, because the last 10 years include the 2021–22 crisis, which on its own would make real strain look normal. The ranking covers the last 10 years, along with the change over the last three months | New York Fed |
 | Currency | How far the USD/CAD rate moved over the last 30 trading days (about six weeks) and how jumpy it has been over the last 90, both compared with history since 2017. The dollar figures are simple arithmetic: your monthly purchases times your USD share, times the change in the rate | Bank of Canada |
 | Suppliers | How concentrated your country mix is, measured by squaring each country's share and adding them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and shoe product lines over the last 12 months | Statistics Canada import records, by product and country |
 
