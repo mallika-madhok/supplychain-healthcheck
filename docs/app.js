@@ -87,9 +87,9 @@ function writeStateToUrl(profile, tab) {
 
 function classifyZ(z) {
   if (z === null || z === undefined || isNaN(z)) return { label: "n/a", color: "var(--text-muted)" };
-  if (z > 2) return { label: "High", color: "var(--status-critical)" };
-  if (z > 1) return { label: "Elevated", color: "var(--status-warning)" };
-  return { label: "Low", color: "var(--status-good)" };
+  if (z > 2) return { label: "Much worse than usual", phrase: "much worse than usual", color: "var(--status-critical)" };
+  if (z > 1) return { label: "Worse than usual", phrase: "worse than usual", color: "var(--status-warning)" };
+  return { label: "Normal", phrase: "normal", color: "var(--status-good)" };
 }
 
 function fmt(n, digits = 2) {
@@ -176,7 +176,7 @@ function zAxis(title) {
   return { gridcolor: cssVar("--border"), zeroline: true, zerolinecolor: cssVar("--text-muted"), title };
 }
 
-// Horizontal reference lines at the Elevated (1) and High (2) thresholds.
+// Horizontal reference lines at the "worse than usual" (1) and "much worse than usual" (2) thresholds.
 function zBandShapes() {
   const c = cssVar("--text-muted");
   return [1, 2].map((y) => ({
@@ -662,11 +662,11 @@ async function renderResults(profile) {
     { label: "your supplier mix", z: supR.z ?? -9 },
   ].sort((a, b) => b.z - a.z);
   const top = ranked[0];
-  const topBand = classifyZ(top.z).label;
+  const topBand = classifyZ(top.z);
   document.getElementById("glance-summary").textContent =
-    topBand === "Low"
+    topBand.label === "Normal"
       ? `All three signals are in a normal range for ${ship.month}. Nothing needs action right now, and the cards below show where each one stands.`
-      : `For ${ship.month}, the biggest pressure on your business is ${top.label} (${topBand.toLowerCase()}). Here is where each of the three stands.`;
+      : `For ${ship.month}, the biggest pressure on your business is ${top.label} (${topBand.phrase}). Here is where each of the three stands.`;
 
   // Cards
   const signals = document.getElementById("signals");

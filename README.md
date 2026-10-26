@@ -2,6 +2,8 @@
 
 **Try it live: https://mallika-madhok.github.io/supplychain-healthcheck/**
 
+**Why should you care?** Shipping delays, exchange rates and relying on too few supplier countries can raise a small importer's costs, and you usually find out from the invoice. This app shows you where each one stands today, puts the exchange rate in dollars for your own purchases, and suggests what to do, so you can order earlier, budget a cushion or add a supplier before it costs you.
+
 ## So, what is this?
 
 For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they do not control. Larger players have analysts tracking the forces behind them. A smaller importer usually finds out when a shipment is late or an invoice comes in higher than expected.
@@ -12,7 +14,7 @@ This app gives you an early read on three of them, using free public data, based
 2. **Currency:** how much the price of a US dollar, in Canadian dollars, has been swinging. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price has not changed.
 3. **Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder one disruption hits you, whether that is a tariff change, a port strike or a factory shutdown.
 
-## Why use it
+## What you get
 
 You get three plain answers instead of a dashboard to interpret:
 
@@ -20,7 +22,7 @@ You get three plain answers instead of a dashboard to interpret:
 - **Currency, in dollars:** what the exchange rate has done to your US dollar purchases compared with a year ago, and what a typical swing costs you per month.
 - **Suppliers:** how exposed your country mix is, with a specific suggestion (for example, move 10 points from your biggest supplier to another major source) that you can try out with one click.
 
-Each one is marked Low, Elevated or High and ends with a short "worth considering" note. A line chart shows how today compares with past squeezes like 2021 to 2022.
+Each one is marked Normal, Worse than usual or Much worse than usual and ends with a short "worth considering" note. A line chart shows how today compares with past squeezes like 2021 to 2022.
 
 ## How do I use it?
 
@@ -40,7 +42,7 @@ Each signal is compared with its own history, and the result is a **z-score**: h
 - **2 to 3:** rare.
 - **3 or more:** something is really off.
 
-Below 1 is shown as **Low**, 1 to 2 as **Elevated**, and above 2 as **High**.
+Below 1 is shown as **Normal**, 1 to 2 as **Worse than usual**, and above 2 as **Much worse than usual**.
 
 | Signal | What is measured | Where the data comes from |
 |---|---|---|
@@ -110,5 +112,5 @@ cd docs && python3 -m http.server 8000
 - History shows what is unusual. It is not a forecast, and this is not financial advice.
 - Country means where customs says the goods were made, which is not always where they were
   sewn.
-- The High / Elevated / Low cut-offs are my first-pass choice and have not been tested
+- The cut-offs for Worse than usual and Much worse than usual are my first-pass choice and have not been tested
   against real price changes yet.
