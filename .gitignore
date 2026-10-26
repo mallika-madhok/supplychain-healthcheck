@@ -17,3 +17,7 @@ target/
 dbt_packages/
 logs/
 .user.yml
+
+# local working notes and tool config (not published)
+notes/
+.mcp.json

@@ -883,7 +883,7 @@ async function renderResults(profile) {
 function updateShareTotal(profile) {
   const total = totalShare(profile);
   const el = document.getElementById("share-total");
-  el.textContent = `Total: ${total}%` + (total !== 100 ? " — shares are rescaled to 100% for the calculation" : "");
+  el.textContent = `Total: ${total}%` + (total !== 100 ? ". Shares are rescaled to 100% for the calculation" : "");
   el.className = "share-total" + (total !== 100 ? " warn" : "");
 }
 
