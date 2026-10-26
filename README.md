@@ -10,7 +10,7 @@
 
 ## So, what is this?
 
-Small clothing and shoe importers in Canada usually find out costs have gone up too late, when a shipment arrives late or an invoice comes in higher. This app gives them a heads-up.
+Small Canadian businesses that import apparel usually find out costs have gone up too late, when a shipment arrives late or an invoice comes in higher. This app gives them a heads-up.
 
 You enter what you buy, how much you spend and where it comes from. The app gives you a monthly pressure reading on three signals:
 
