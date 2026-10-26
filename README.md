@@ -1,91 +1,94 @@
 # Canadian Apparel Import Pressure Monitor
 
-**Live app: https://mallika-madhok.github.io/supplychain-healthcheck/**
+**Try it live: https://mallika-madhok.github.io/supplychain-healthcheck/**
 
-A free, open-source tool that turns public trade, currency and supply-chain data into a
-single monthly "pressure" reading for a small Canadian apparel importer. You describe your
-product category, country mix and USD exposure, and the page scores how unusual current
-conditions are for *your* profile, with the SQL behind every number shown next to it.
+## What this is
 
-The data pipeline is the main artifact; the frontend is a thin, static view of its output.
+If you bring clothing or shoes into Canada, three things can quietly make your life harder:
+shipping gets slower or more expensive, the US dollar gets pricier, or too much of what you
+buy comes from one country.
 
-## How it works
+Big retailers have teams watching all of this. Small importers usually find out when a
+shipment is late or an invoice comes in higher than expected. I built this tool to give them
+a simple monthly read on it, using free public data.
 
-```
-GitHub Actions (weekly cron)
-  Python extraction  ->  local DuckDB (raw)  ->  MotherDuck (raw schema)
-       -> dbt (staging -> marts, runs on MotherDuck)
-       -> export marts to Parquet -> committed to data/ and docs/data/
-GitHub Pages (static: HTML/CSS/JS + DuckDB-Wasm + Plotly)
-  loads the Parquet files and runs SQL in the visitor's browser
-```
+## How to use it
 
-- **No backend, no accounts, no tokens in the browser.** The site only reads the committed
-  Parquet files. MotherDuck is used by the pipeline alone.
-- **Zero spend.** GitHub Actions, GitHub Pages and the MotherDuck free tier (no card on file).
+1. Pick what you buy, like T-shirts, jeans or leather shoes.
+2. Say how much of your buying is paid in US dollars.
+3. Say roughly where your goods come from, by country.
 
-## Data sources
+You get one headline score, **Low**, **Elevated** or **High**, plus a breakdown of what is
+pushing it up or down. Move any slider and everything updates straight away.
 
-| Series | Source | Coverage |
-|---|---|---|
-| Freight & delay pressure | NY Fed Global Supply Chain Pressure Index | Monthly, 1998 on |
-| Currency (USD/CAD) | Bank of Canada Valet API | Daily, 2017-03-01 on |
-| Origin concentration and country mix | StatCan CIMT bulk imports (HS6 rolled up to 42 HS4 headings) | Monthly, 2023 on |
-| Apparel trade and clothing CPI | StatCan WDS (landed, not yet used in marts) | Monthly |
+## What goes into the score
 
-## Scoring
-
-Three z-scores, equal-weighted into a composite. Bands: below 0 Low, 0 to 1 Elevated, above 1
-High (provisional, not yet backtested).
-
-1. **Freight**: GSCPI vs. its own history.
-2. **Currency**: USD/CAD 30-trading-day change and 90-day volatility, averaged, then scaled by
-   the visitor's USD-invoiced share.
-3. **Origin concentration**: HHI of the visitor's country mix vs. the spread of HHI across
-   Canadian apparel product lines over the last 12 months.
-
-See the Methodology tab in the app for limitations.
-
-## Repository layout
-
-| Path | Contents |
+| Question | Where the answer comes from |
 |---|---|
-| `src/pipeline/` | Extraction (`sources/`), revision-safe landing, MotherDuck loader, Parquet export |
-| `dbt/` | Staging and mart models, tests, MotherDuck profile |
-| `data/` | Exported mart Parquet files (also copied to `docs/data/` for the site) |
-| `docs/` | The static site served by GitHub Pages |
-| `.github/workflows/refresh.yml` | Weekly refresh: extract, load, `dbt build`, export, commit |
-| `tests/` | pytest suite for the extraction code |
-| `docs/superpowers/` | Design spec and phase plans |
+| Is global shipping under strain right now? | New York Fed supply chain index |
+| Is the Canadian dollar moving a lot against the US dollar? | Bank of Canada exchange rates |
+| Do you rely too heavily on one country? | Statistics Canada import records, by product and country |
 
-## Run it locally
+Each one is compared with its own history, so "High" means "unusually high compared with
+what is normal". The three results are averaged into the headline score.
+
+The score does not predict your costs, and it says nothing about any particular supplier.
+It is a way to see when conditions are getting tougher.
+
+## Seeing how it works
+
+Every chart in the app has a small "SQL & raw result" box underneath. Open it and you can see
+the data table behind the chart and the exact query used to calculate it, so nothing is a
+black box.
+
+## How it stays up to date
+
+Once a week, an automatic job downloads the latest data, cleans it up, recalculates
+everything and updates the website. There is no server and nobody has to log in, and it all
+runs on free services.
+
+## For the technically curious
+
+The pipeline runs like this:
+
+1. **Python** downloads the raw data.
+2. **dbt**, running on **MotherDuck** (a free cloud database), cleans and reshapes it.
+3. The results are saved as small **Parquet** files in this repo.
+4. The website, hosted on **GitHub Pages**, reads those files and does the calculations in
+   your browser using **DuckDB-Wasm**. Your inputs never leave your device.
+5. **GitHub Actions** runs steps 1 to 3 every Monday.
+
+| Folder | What is in it |
+|---|---|
+| `src/pipeline/` | Python code that downloads and loads the data |
+| `dbt/` | The cleaning and calculation steps, with data quality tests |
+| `data/` | The finished data files |
+| `docs/` | The website |
+| `.github/workflows/` | The weekly update job |
+| `tests/` | Tests for the Python code |
+
+To run it yourself:
 
 ```bash
 uv sync
-uv run pytest && uv run ruff check .
+uv run pytest
 
-# Pipeline (needs MOTHERDUCK_TOKEN in .env)
+# Run the pipeline (needs a MotherDuck token saved as MOTHERDUCK_TOKEN in .env)
 set -a && source .env && set +a
 uv run python -m pipeline.extract
-uv run python -m pipeline.extract_cimt      # downloads ~80 MB per year
+uv run python -m pipeline.extract_cimt
 uv run python -m pipeline.load_motherduck
 uv run dbt build --project-dir dbt --profiles-dir dbt/profiles
 uv run python -m pipeline.export_marts
 
-# Site
-cd docs && python3 -m http.server 8000      # open http://localhost:8000
+# View the website
+cd docs && python3 -m http.server 8000
 ```
 
-## Deployment
+## Limits to keep in mind
 
-- **Pages**: Settings, Pages, deploy from branch `master`, folder `/docs`.
-- **Refresh job**: add the `MOTHERDUCK_TOKEN` repository secret, then run the *Refresh data*
-  workflow from the Actions tab (it also runs every Monday).
-
-## Limitations
-
-- The score describes how unusual conditions are relative to history. It is not a forecast
-  and says nothing about any specific supplier.
-- Your profile is a hypothetical spend mix, not actual purchases.
-- Origin is customs country of origin, which can differ from where goods were sewn.
-- Currency windows are counted in trading days, not calendar days.
+- Your inputs are a rough picture of your buying, not your actual orders.
+- Country means where customs says the goods were made, which is not always where they were
+  sewn.
+- The High / Elevated / Low cut-offs are my first-pass choice and have not been tested
+  against real price changes yet.
