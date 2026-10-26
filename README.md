@@ -4,13 +4,16 @@
 
 ## What this is
 
-If you bring clothing or shoes into Canada, three things can quietly make your life harder:
-shipping gets slower or more expensive, the US dollar gets pricier, or too much of what you
-buy comes from one country.
+For small businesses that import clothing and shoes into Canada, the costs that matter most
+are the ones they do not control: shipping delays, exchange rates, and dependence on a few
+supplier countries. Large retailers have analysts tracking these. A small importer usually
+finds out when a shipment is late or an invoice comes in higher than planned, which is too
+late to adjust an order or negotiate.
 
-Big retailers have teams watching all of this. Small importers usually find out when a
-shipment is late or an invoice comes in higher than expected. I built this tool to give them
-a simple monthly read on it, using free public data.
+This tool gives them an early signal. It turns free public data into a single monthly score
+for their own mix of products, countries and currency, so they can see when conditions are
+getting harder and decide whether to order earlier, spread suppliers or hedge currency
+before the cost shows up.
 
 ## How to use it
 
