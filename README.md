@@ -4,11 +4,7 @@
 
 ## What this is
 
-For small businesses that import clothing and shoes into Canada, the costs that matter most
-are the ones they do not control: shipping delays, exchange rates, and dependence on a few
-supplier countries. Large retailers have analysts tracking these. A small importer usually
-finds out when a shipment is late or an invoice comes in higher than planned, which is too
-late to adjust an order or negotiate.
+For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they do not control: dependence on a concentrated supplier mix (most of your stock from a handful of countries), shipping delays, and tariffs. Larger players have analysts tracking these signals. A smaller importer usually finds out when a shipment is late or an invoice comes in higher than expected.
 
 This tool gives them an early signal. It turns free public data into a single monthly score
 for their own mix of products, countries and currency, so they can see when conditions are
