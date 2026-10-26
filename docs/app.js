@@ -284,8 +284,10 @@ function suggestShift(profile, canadaPct) {
 
 // ---------- queries ----------
 
-const FREIGHT_SQL = `select strftime(month, '%Y-%m-%d') as month, gscpi_value, gscpi_zscore
+const FREIGHT_SQL = `-- Last 10 years. The z-score itself is measured against the full record since 1998.
+select strftime(month, '%Y-%m-%d') as month, gscpi_value, gscpi_zscore
 from read_parquet('mart_freight_pressure.parquet')
+where month > (select max(month) from read_parquet('mart_freight_pressure.parquet')) - interval 10 year
 order by month`;
 
 const CURRENCY_SQL = `select strftime(date, '%Y-%m-%d') as date, usd_cad_rate, level_change_zscore, volatility_zscore
@@ -294,12 +296,16 @@ where level_change_zscore is not null and volatility_zscore is not null
 order by date`;
 
 function shipSql() {
-  return `-- Where shipping pressure stands today, and how it ranks against every month since 1998
-with ranked as (
+  return `-- Where shipping pressure stands today, and how it ranks against the last 10 years
+with recent as (
+  select * from read_parquet('mart_freight_pressure.parquet')
+  where month > (select max(month) from read_parquet('mart_freight_pressure.parquet')) - interval 10 year
+),
+ranked as (
   select month, gscpi_value, gscpi_zscore,
          percent_rank() over (order by gscpi_zscore) as pct,
          lag(gscpi_zscore, 3) over (order by month) as z_3_months_ago
-  from read_parquet('mart_freight_pressure.parquet')
+  from recent
 )
 select strftime(month, '%Y-%m') as month, gscpi_value, gscpi_zscore,
        round(100 * pct) as percentile, z_3_months_ago
@@ -403,8 +409,8 @@ function shippingReading(ship) {
   const state =
     z > 2 ? "under heavy strain" : z > 1 ? "tighter than normal" : z > -0.5 ? "close to normal" : "looser than normal";
   const rank = pct >= 50
-    ? `Tighter than ${pct}% of months since 1998`
-    : `Easier than ${100 - pct}% of months since 1998`;
+    ? `Tighter than ${pct}% of months in the last 10 years`
+    : `Easier than ${100 - pct}% of months in the last 10 years`;
   let consider;
   if (z > 1 && delta > 0.3) {
     consider = "Place orders for your next season earlier than usual and add a few weeks to the delivery dates you plan around. Ask suppliers to confirm ship dates now.";

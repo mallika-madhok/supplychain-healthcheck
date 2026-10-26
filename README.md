@@ -50,7 +50,7 @@ Below 1 is shown as **Normal**, 1 to 2 as **Worse than usual**, and above 2 as *
 
 | Signal | What is measured | Where the data comes from |
 |---|---|---|
-| Shipping | The Global Supply Chain Pressure Index, compared with its history since 1998. Also shown: how today ranks against every month since, and the change over the last three months | New York Fed |
+| Shipping | The Global Supply Chain Pressure Index. The status is judged against its full history since 1998, because the last 10 years include the 2021–22 crisis, which on its own would make real strain look normal. The chart and the ranking cover the last 10 years, along with the change over the last three months | New York Fed |
 | Currency | How far the USD/CAD rate moved over the last 30 trading days (about six weeks) and how jumpy it has been over the last 90, both compared with history since 2017. The dollar figures are simple arithmetic: your monthly purchases times your USD share, times the change in the rate | Bank of Canada |
 | Suppliers | How concentrated your country mix is, measured by squaring each country's share and adding them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and shoe product lines over the last 12 months | Statistics Canada import records, by product and country |
 

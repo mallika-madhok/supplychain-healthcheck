@@ -509,24 +509,24 @@ table.kv td { font-weight: 600; }
 
 /* ===== Plaid background, gold stars, clearer steps ===== */
 body {
-  background-color: #fbe4ea;
+  background-color: #fdf2f5;
   background-image:
-    repeating-linear-gradient(90deg, rgba(107, 29, 46, 0.13) 0 44px, transparent 44px 132px),
-    repeating-linear-gradient(0deg, rgba(107, 29, 46, 0.13) 0 44px, transparent 44px 132px),
-    repeating-linear-gradient(90deg, transparent 0 62px, rgba(201, 162, 39, 0.55) 62px 64px, transparent 64px 132px),
-    repeating-linear-gradient(0deg, transparent 0 62px, rgba(201, 162, 39, 0.55) 62px 64px, transparent 64px 132px),
-    repeating-linear-gradient(90deg, transparent 0 88px, rgba(255, 255, 255, 0.7) 88px 90px, transparent 90px 132px),
-    repeating-linear-gradient(0deg, transparent 0 88px, rgba(255, 255, 255, 0.7) 88px 90px, transparent 90px 132px);
+    repeating-linear-gradient(90deg, rgba(107, 29, 46, 0.055) 0 44px, transparent 44px 132px),
+    repeating-linear-gradient(0deg, rgba(107, 29, 46, 0.055) 0 44px, transparent 44px 132px),
+    repeating-linear-gradient(90deg, transparent 0 62px, rgba(201, 162, 39, 0.28) 62px 63px, transparent 63px 132px),
+    repeating-linear-gradient(0deg, transparent 0 62px, rgba(201, 162, 39, 0.28) 62px 63px, transparent 63px 132px),
+    repeating-linear-gradient(90deg, transparent 0 88px, rgba(255, 255, 255, 0.55) 88px 90px, transparent 90px 132px),
+    repeating-linear-gradient(0deg, transparent 0 88px, rgba(255, 255, 255, 0.55) 88px 90px, transparent 90px 132px);
   background-attachment: fixed;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) body {
     background-color: #1a0a10;
     background-image:
-      repeating-linear-gradient(90deg, rgba(240, 163, 184, 0.09) 0 44px, transparent 44px 132px),
-      repeating-linear-gradient(0deg, rgba(240, 163, 184, 0.09) 0 44px, transparent 44px 132px),
-      repeating-linear-gradient(90deg, transparent 0 62px, rgba(230, 196, 90, 0.35) 62px 64px, transparent 64px 132px),
-      repeating-linear-gradient(0deg, transparent 0 62px, rgba(230, 196, 90, 0.35) 62px 64px, transparent 64px 132px);
+      repeating-linear-gradient(90deg, rgba(240, 163, 184, 0.045) 0 44px, transparent 44px 132px),
+      repeating-linear-gradient(0deg, rgba(240, 163, 184, 0.045) 0 44px, transparent 44px 132px),
+      repeating-linear-gradient(90deg, transparent 0 62px, rgba(230, 196, 90, 0.18) 62px 63px, transparent 63px 132px),
+      repeating-linear-gradient(0deg, transparent 0 62px, rgba(230, 196, 90, 0.18) 62px 63px, transparent 63px 132px);
   }
 }
 .masthead { border-bottom: 4px solid var(--gold); }
