@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import os
 import pathlib
+import shutil
 
 import duckdb
 
 MOTHERDUCK_DATABASE = "apparel_import_monitor"
 EXPORT_DIR = pathlib.Path("data")
+SITE_DATA_DIR = pathlib.Path("docs/data")  # served same-origin by GitHub Pages
 
 MARTS = [
     "mart_freight_pressure",
@@ -32,6 +34,11 @@ def run() -> list[str]:
             out_path = EXPORT_DIR / f"{mart}.parquet"
             con.execute(f"COPY marts.{mart} TO '{out_path}' (FORMAT PARQUET)")
             exported.append(str(out_path))
+        SITE_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        for path in exported[:]:
+            copy = SITE_DATA_DIR / pathlib.Path(path).name
+            shutil.copyfile(path, copy)
+            exported.append(str(copy))
         return exported
     finally:
         con.close()

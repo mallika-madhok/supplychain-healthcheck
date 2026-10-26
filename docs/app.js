@@ -4,12 +4,9 @@
 
 import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm";
 
-// raw.githubusercontent.com doesn't send CORS headers, so a browser fetch from a
-// different origin (this GitHub Pages site) fails silently. jsDelivr's GitHub proxy
-// serves the same repo files with Access-Control-Allow-Origin: * — verified live
-// before using it here.
-const REPO_RAW_BASE =
-  "https://cdn.jsdelivr.net/gh/mallika-madhok/supplychain-healthcheck@master/data";
+// Parquet files are published next to the page (docs/data/, copied there by the weekly
+// pipeline), so the fetch is same-origin: no CORS issue and no CDN cache lag.
+const DATA_BASE = "data";
 
 const CATEGORY_LABELS = { "61": "Knit apparel", "62": "Woven apparel", "64": "Footwear" };
 
@@ -60,7 +57,7 @@ function fmt(n, digits = 2) {
 }
 
 async function registerParquet(conn, db, name) {
-  const url = `${REPO_RAW_BASE}/${name}`;
+  const url = `${DATA_BASE}/${name}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${name}: ${res.status}`);
   const buf = await res.arrayBuffer();

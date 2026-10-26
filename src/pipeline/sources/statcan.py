@@ -30,7 +30,7 @@ CATEGORY_NAICS: dict[str, tuple[int, str]] = {
 }
 
 
-def fetch_apparel_trade(periods: int = 6) -> list[dict]:
+def fetch_apparel_trade(periods: int = 120) -> list[dict]:
     """Fetch the latest N months of Canadian apparel imports by country and category.
 
     Returns one dict per (month, country, category) with a non-null value: month (date),
@@ -67,7 +67,7 @@ def fetch_apparel_trade(periods: int = 6) -> list[dict]:
     return rows
 
 
-def fetch_clothing_cpi(periods: int = 6) -> list[dict]:
+def fetch_clothing_cpi(periods: int = 120) -> list[dict]:
     """Fetch the latest N months of Canadian clothing and footwear CPI.
 
     Returns one dict per month with a non-null value: month (date),

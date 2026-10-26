@@ -1,0 +1,40 @@
+name: Refresh data
+
+on:
+  schedule:
+    - cron: "0 14 * * 1"   # Mondays 14:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - run: uv run pytest -q
+      - name: Extract (full history each run; the runner is ephemeral)
+        run: |
+          uv run python -m pipeline.extract
+          uv run python -m pipeline.extract_cimt
+      - name: Load raw tables into MotherDuck
+        run: uv run python -m pipeline.load_motherduck
+      - name: dbt build
+        run: uv run dbt build --project-dir dbt --profiles-dir dbt/profiles
+      - name: Export marts to Parquet
+        run: uv run python -m pipeline.export_marts
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.parquet docs/data/*.parquet
+          git diff --cached --quiet || (git commit -m "data: weekly refresh" && git push)
