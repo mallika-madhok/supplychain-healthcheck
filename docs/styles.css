@@ -1,46 +1,46 @@
 /* Canadian Apparel Import Pressure Monitor — frontend styles */
 
+/* Palette: maroon + baby pink. Status colours stay green/amber/red so they never
+   blend into the theme. */
 :root {
-  --bg: #f7f6f3;
+  --maroon: #6b1d2e;
+  --maroon-deep: #4a1220;
+  --pink: #f9d9e1;
+  --pink-soft: #fdeef2;
+  --bg: #fff7f9;
   --surface: #ffffff;
-  --border: #e3e1da;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #8a8880;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
+  --border: #f0d3db;
+  --text-primary: #2b0f17;
+  --text-secondary: #6a4a53;
+  --text-muted: #9a7d86;
+  --accent: #8a2a40;
+  --series-1: #8a2a40;
+  --series-2: #d9527a;
+  --series-3: #3f8f8a;
+  --status-good: #2e9e5b;
+  --status-warning: #e0a21b;
+  --status-serious: #d9743f;
+  --status-critical: #cf2a45;
+  --shadow: 0 1px 2px rgba(107, 29, 46, 0.06), 0 8px 24px rgba(107, 29, 46, 0.06);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #141413;
-    --surface: #1a1a19;
-    --border: #30302c;
-    --text-primary: #f0efec;
-    --text-secondary: #c3c2b7;
-    --text-muted: #8a8880;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
+    --pink: #3a1822;
+    --pink-soft: #2a1119;
+    --bg: #1a0a10;
+    --surface: #25101a;
+    --border: #43212d;
+    --text-primary: #fbeaf0;
+    --text-secondary: #d9b5c1;
+    --text-muted: #a37f8b;
+    --accent: #f0a3b8;
+    --series-1: #f0a3b8;
+    --series-2: #d9607f;
+    --series-3: #5fc0b9;
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     color-scheme: dark;
   }
-}
-:root[data-theme="dark"] {
-  --bg: #141413;
-  --surface: #1a1a19;
-  --border: #30302c;
-  --text-primary: #f0efec;
-  --text-secondary: #c3c2b7;
-  --text-muted: #8a8880;
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -313,3 +313,104 @@ footer.site {
   .driver-value { grid-column: 2; }
   .hero-score { font-size: 2.1rem; }
 }
+
+/* ===== Facelift ===== */
+body {
+  background: linear-gradient(180deg, var(--pink-soft) 0, var(--bg) 340px) no-repeat, var(--bg);
+}
+h1, .card h2, .hero-score, .methodology h3 {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+.masthead {
+  background:
+    radial-gradient(circle at 85% -20%, rgba(249, 217, 225, 0.22), transparent 55%),
+    linear-gradient(135deg, var(--maroon-deep), var(--maroon));
+  color: #fbe9ee;
+  padding: 34px 0 40px;
+  margin-bottom: 8px;
+}
+.masthead .eyebrow { color: #f2b6c6; }
+.masthead h1 {
+  font-size: clamp(1.7rem, 4.6vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 8px 0 10px;
+}
+.masthead .sub { color: #f3cdd7; max-width: 62ch; margin: 0; }
+
+nav.tabs {
+  border-bottom: none;
+  gap: 8px;
+  margin: 22px 0 24px;
+  padding-bottom: 2px;
+}
+nav.tabs button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+nav.tabs button:hover { border-color: var(--accent); color: var(--accent); }
+nav.tabs button.active {
+  background: var(--maroon);
+  border-color: var(--maroon);
+  color: #fff;
+}
+
+.card {
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+.card h2 { font-size: 1.25rem; font-weight: 600; color: var(--maroon); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card h2 { color: var(--accent); }
+}
+
+.card.hero {
+  background: linear-gradient(135deg, var(--pink), var(--pink-soft));
+  border-color: var(--border);
+}
+.hero-score { font-size: 3.2rem; font-weight: 600; color: var(--maroon); }
+.card.hero .stat-label { font-size: 0.78rem; letter-spacing: 0.02em; }
+.hero-summary { color: var(--text-primary); }
+
+.stat {
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--pink);
+}
+.stat-value { color: var(--maroon); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .stat-value,
+  :root:not([data-theme="light"]) .hero-score { color: var(--accent); }
+}
+
+input[type="range"] { accent-color: var(--maroon); }
+.field select { border-radius: 10px; background: var(--pink-soft); }
+.btn {
+  border-radius: 999px;
+  background: var(--pink-soft);
+  border-color: var(--border);
+  color: var(--maroon);
+  font-weight: 500;
+}
+.btn:hover { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+.field-title { color: var(--maroon); }
+
+details.sql-drawer { border-radius: 12px; background: var(--pink-soft); }
+details.sql-drawer summary { color: var(--accent); font-weight: 600; }
+
+.driver-rank {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--pink); color: var(--maroon);
+  display: grid; place-items: center; font-size: 0.9rem;
+}
+.driver a { color: var(--accent); font-weight: 500; }
+
+.methodology a, footer.site a { color: var(--accent); }
+footer.site { border-top-color: var(--border); }

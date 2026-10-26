@@ -472,8 +472,8 @@ async function renderResults(profile) {
     "chart-composite",
     [
       line(x, rows.map((r) => r.composite_z), "Composite", cssVar("--text-primary"), { line: { color: cssVar("--text-primary"), width: 2.4 } }),
-      line(x, rows.map((r) => r.freight_z), "Freight", cssVar("--series-1"), { line: { color: cssVar("--series-1"), width: 1.2 }, opacity: 0.7 }),
-      line(x, rows.map((r) => r.currency_exposed_z), "Currency (scaled)", cssVar("--series-2"), { line: { color: cssVar("--series-2"), width: 1.2 }, opacity: 0.7 }),
+      line(x, rows.map((r) => r.freight_z), "Freight", cssVar("--series-1"), { line: { color: cssVar("--series-1"), width: 1.6 }, opacity: 0.9 }),
+      line(x, rows.map((r) => r.currency_exposed_z), "Currency (scaled)", cssVar("--series-2"), { line: { color: cssVar("--series-2"), width: 1.6 }, opacity: 0.9 }),
     ],
     baseLayout({ yaxis: zAxis("z-score"), shapes: zBandShapes() })
   );

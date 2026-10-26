@@ -4,23 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canadian Apparel Import Pressure Monitor</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%232a78d6%27/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <header class="site">
+  <header class="masthead">
+    <div class="wrap">
       <div class="eyebrow">Open-source apparel sourcing risk monitor</div>
       <h1>Canadian Apparel Import Pressure Monitor</h1>
       <p class="sub">
         Describe your sourcing mix below. Every number on this page is computed live,
-        in your browser, by running real SQL against the same Parquet files the data
-        pipeline publishes &mdash; nothing is server-rendered or precomputed per visitor.
-        No data is sent anywhere; your profile lives only in this page and its URL.
+        in your browser, from the same data files the weekly pipeline publishes.
+        Nothing is sent anywhere; your profile lives only in this page and its URL.
       </p>
-    </header>
+    </div>
+  </header>
 
+  <div class="wrap">
     <nav class="tabs">
       <button data-tab="results" class="active">Overview</button>
       <button data-tab="freight">Freight &amp; Delay</button>
