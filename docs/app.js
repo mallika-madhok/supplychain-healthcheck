@@ -574,6 +574,16 @@ function buildCategorySelect() {
   });
 }
 
+// Canada's own import mix for a category (latest 12 months), as whole-number shares.
+async function canadaMix(category) {
+  const rows = await runQuery(mixSql({ category }));
+  const shares = sharesFrom({});
+  rows.forEach((r) => (shares[r.country] = Math.round(r.canada_share_pct)));
+  const drift = 100 - totalShare({ shares });
+  shares.OTHER = Math.max(0, shares.OTHER + drift);
+  return shares;
+}
+
 // ---------- tabs ----------
 
 let currentTab = "results";
@@ -630,8 +640,9 @@ async function main() {
     refresh();
   });
   document.querySelectorAll("[data-preset]").forEach((btn) =>
-    btn.addEventListener("click", () => {
-      profile.shares = sharesFrom(PRESETS[btn.dataset.preset]);
+    btn.addEventListener("click", async () => {
+      profile.shares =
+        btn.dataset.preset === "canada" ? await canadaMix(profile.category) : sharesFrom(PRESETS[btn.dataset.preset]);
       syncControls(profile);
       refresh();
     })

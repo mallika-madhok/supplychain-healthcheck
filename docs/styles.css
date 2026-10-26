@@ -414,3 +414,17 @@ details.sql-drawer summary { color: var(--accent); font-weight: 600; }
 
 .methodology a, footer.site a { color: var(--accent); }
 footer.site { border-top-color: var(--border); }
+
+.preset-row .btn {
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  color: var(--maroon);
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.preset-row .btn:hover { background: var(--maroon); color: #fff; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .preset-row .btn { color: var(--accent); }
+  :root:not([data-theme="light"]) .preset-row .btn:hover { color: #fff; }
+}
