@@ -18,9 +18,11 @@ This app gives you an early read on three of them, using free public data, based
 
 You get three plain answers instead of a dashboard to interpret:
 
-- **Shipping:** where it stands against every month since 1998, whether it is getting tighter or easing, and whether to order earlier.
-- **Currency, in dollars:** what the exchange rate has done to your US dollar purchases compared with a year ago, and what a typical swing costs you per month.
-- **Suppliers:** how exposed your country mix is, with a specific suggestion (for example, move 10 points from your biggest supplier to another major source) that you can try out with one click.
+⭐ **Shipping:** where it stands against every month since 1998, whether it is getting tighter or easing, and whether to order earlier.
+
+⭐ **Currency, in dollars:** what the exchange rate has done to your US dollar purchases compared with a year ago, and what a typical swing costs you per month.
+
+⭐ **Suppliers:** how exposed your country mix is, with a specific suggestion (for example, move 10 points from your biggest supplier to another major source) that you can try out with one click.
 
 Each one is marked Normal, Worse than usual or Much worse than usual and ends with a short "worth considering" note. A line chart shows how today compares with past squeezes like 2021 to 2022.
 
@@ -36,11 +38,15 @@ Move anything and the answers update straight away. Not sure where to start? The
 
 Each signal is compared with its own history, and the result is a **z-score**: how far today's value sits from its average, counted in standard deviations. A standard deviation is simply the size of a typical swing for that signal, which makes it a fair ruler for very different things like freight indexes and exchange rates.
 
-- **Around 0:** right at the average.
-- **Up to 1:** within a normal swing.
-- **1 to 2:** unusual. It happens, but not often.
-- **2 to 3:** rare.
-- **3 or more:** something is really off.
+⭐ **Around 0:** right at the average.
+
+⭐ **Up to 1:** within a normal swing.
+
+⭐ **1 to 2:** unusual. It happens, but not often.
+
+⭐ **2 to 3:** rare.
+
+⭐ **3 or more:** something is really off.
 
 Below 1 is shown as **Normal**, 1 to 2 as **Worse than usual**, and above 2 as **Much worse than usual**.
 
@@ -107,10 +113,13 @@ cd docs && python3 -m http.server 8000
 
 ## Limits to keep in mind
 
-- Your inputs are a rough picture of your buying, not your actual orders.
-- The dollar figures assume your purchase volume stays the same and that you pay spot rates. If you hedge, or your supplier changes its prices when the rate moves, your real numbers will differ.
-- History shows what is unusual. It is not a forecast, and this is not financial advice.
-- Country means where customs says the goods were made, which is not always where they were
+⭐ Your inputs are a rough picture of your buying, not your actual orders.
+
+⭐ The dollar figures assume your purchase volume stays the same and that you pay spot rates. If you hedge, or your supplier changes its prices when the rate moves, your real numbers will differ.
+
+⭐ History shows what is unusual. It is not a forecast, and this is not financial advice.
+
+⭐ Country means where customs says the goods were made, which is not always where they were
   sewn.
-- The cut-offs for Worse than usual and Much worse than usual are my first-pass choice and have not been tested
+⭐ The cut-offs for Worse than usual and Much worse than usual are my first-pass choice and have not been tested
   against real price changes yet.

@@ -14,6 +14,7 @@
   --text-secondary: #6a4a53;
   --text-muted: #9a7d86;
   --accent: #8a2a40;
+  --gold: #c9a227;
   --maroon-line: #4a1220;
   --series-1: #8a2a40;
   --series-2: #d9527a;
@@ -36,6 +37,7 @@
     --text-secondary: #d9b5c1;
     --text-muted: #a37f8b;
     --accent: #f0a3b8;
+    --gold: #e6c45a;
     --maroon-line: #fbeaf0;
     --series-1: #f0a3b8;
     --series-2: #d9607f;
@@ -504,3 +506,62 @@ table.kv td { font-weight: 600; }
 
 .stat-tag { white-space: nowrap; text-transform: none; letter-spacing: 0; font-size: 0.72rem; padding: 3px 10px; }
 .signal-head { gap: 8px; flex-wrap: wrap; }
+
+/* ===== Plaid background, gold stars, clearer steps ===== */
+body {
+  background-color: #fbe4ea;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(107, 29, 46, 0.13) 0 44px, transparent 44px 132px),
+    repeating-linear-gradient(0deg, rgba(107, 29, 46, 0.13) 0 44px, transparent 44px 132px),
+    repeating-linear-gradient(90deg, transparent 0 62px, rgba(201, 162, 39, 0.55) 62px 64px, transparent 64px 132px),
+    repeating-linear-gradient(0deg, transparent 0 62px, rgba(201, 162, 39, 0.55) 62px 64px, transparent 64px 132px),
+    repeating-linear-gradient(90deg, transparent 0 88px, rgba(255, 255, 255, 0.7) 88px 90px, transparent 90px 132px),
+    repeating-linear-gradient(0deg, transparent 0 88px, rgba(255, 255, 255, 0.7) 88px 90px, transparent 90px 132px);
+  background-attachment: fixed;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body {
+    background-color: #1a0a10;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(240, 163, 184, 0.09) 0 44px, transparent 44px 132px),
+      repeating-linear-gradient(0deg, rgba(240, 163, 184, 0.09) 0 44px, transparent 44px 132px),
+      repeating-linear-gradient(90deg, transparent 0 62px, rgba(230, 196, 90, 0.35) 62px 64px, transparent 64px 132px),
+      repeating-linear-gradient(0deg, transparent 0 62px, rgba(230, 196, 90, 0.35) 62px 64px, transparent 64px 132px);
+  }
+}
+.masthead { border-bottom: 4px solid var(--gold); }
+footer.site {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-top: 28px;
+}
+.loading { background: var(--surface); border-radius: 12px; padding: 14px 18px; }
+nav.tabs button { box-shadow: 0 1px 2px rgba(107, 29, 46, 0.08); }
+
+/* gold stars instead of bullets */
+.methodology ul { list-style: none; padding-left: 0; }
+.methodology li { position: relative; padding-left: 1.7em; margin-bottom: 8px; }
+.methodology li::before { content: "★"; position: absolute; left: 0; top: 0; color: var(--gold); }
+.consider-label::before { content: "★ "; color: var(--gold); }
+.signal-title::before { content: "★ "; color: var(--gold); }
+
+/* numbered steps on the profile card */
+.step {
+  display: inline-grid; place-items: center;
+  width: 20px; height: 20px; margin-right: 6px;
+  border-radius: 50%; background: var(--maroon); color: #fff;
+  font-size: 0.7rem; font-weight: 700;
+}
+.field label .step, .field-title .step { vertical-align: 1px; }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 18px;
+  font-size: 0.8rem; color: var(--text-secondary);
+  margin: -6px 0 16px;
+}
+.legend span::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 6px; background: var(--dot);
+}

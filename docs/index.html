@@ -39,19 +39,19 @@
         <div class="desc">Rough numbers are fine. Everything below updates as you change them.</div>
         <div class="profile-top">
           <div class="field">
-            <label for="category-select">What you mostly buy</label>
+            <label for="category-select"><span><span class="step">1</span>What you mostly buy</span></label>
             <select id="category-select"></select>
           </div>
           <div class="field">
-            <label for="budget-input">Monthly purchases (CAD)</label>
+            <label for="budget-input"><span><span class="step">2</span>Monthly purchases (CAD)</span></label>
             <input type="number" id="budget-input" min="0" step="5000" inputmode="numeric">
           </div>
           <div class="field">
-            <label for="slider-usd">Share paid in US dollars <span class="field-value" id="val-usd"></span></label>
+            <label for="slider-usd"><span><span class="step">3</span>Share paid in US dollars</span> <span class="field-value" id="val-usd"></span></label>
             <input type="range" min="0" max="100" step="5" id="slider-usd">
           </div>
         </div>
-        <div class="field-title">Where it comes from (share of your purchases by country)</div>
+        <div class="field-title"><span class="step">4</span>Where it comes from (share of your purchases by country)</div>
         <div class="profile-grid" id="country-sliders"></div>
         <div class="share-total" id="share-total"></div>
         <div class="presets">
@@ -67,6 +67,11 @@
       <div class="card glance">
         <h2>This month at a glance</h2>
         <p class="glance-summary" id="glance-summary"></p>
+        <div class="legend">
+          <span style="--dot:var(--status-good)"><strong>Normal:</strong> within a typical range</span>
+          <span style="--dot:var(--status-warning)"><strong>Worse than usual:</strong> unusual, worth a look</span>
+          <span style="--dot:var(--status-critical)"><strong>Much worse than usual:</strong> rare, act on it</span>
+        </div>
         <div class="signals" id="signals"></div>
       </div>
 
