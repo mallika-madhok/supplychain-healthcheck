@@ -501,12 +501,18 @@ function gauge(z) {
     `<div class="gauge-labels"><span>Normal</span><span>Worse</span><span>Much worse</span></div></div>`;
 }
 
+// Small round icon reusing the header's SVG for that signal.
+function miniIcon(tab) {
+  const svg = document.querySelector(`.corner-icons [data-goto="${tab}"] svg`);
+  return svg ? `<span class="mini-ic ic-${tab}">${svg.outerHTML}</span>` : "";
+}
+
 function signalCard({ title, z, headline, detail, consider, tab }) {
   const c = classifyZ(z);
   const el = document.createElement("div");
   el.className = "signal";
   el.innerHTML =
-    `<div class="signal-head"><span class="signal-title">${title}</span>` +
+    `<div class="signal-head"><span class="signal-title">${miniIcon(tab)}${title}</span>` +
     `<span class="stat-tag" style="background:${c.color}">${c.label}</span></div>` +
     `<div class="signal-headline">${headline}</div>` +
     gauge(z) +
@@ -946,6 +952,10 @@ async function main() {
   document.querySelectorAll("nav.tabs button").forEach((btn) =>
     btn.addEventListener("click", () => switchTab(btn.dataset.tab))
   );
+  ["freight", "currency", "origin"].forEach((tab) => {
+    document.querySelector(`nav.tabs button[data-tab="${tab}"]`).insertAdjacentHTML("afterbegin", miniIcon(tab));
+    document.querySelector(`#view-${tab} .card h2`).insertAdjacentHTML("afterbegin", miniIcon(tab));
+  });
   document.querySelectorAll(".corner-icons [data-goto]").forEach((a) =>
     a.addEventListener("click", (e) => {
       e.preventDefault();
