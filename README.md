@@ -8,9 +8,11 @@
   <img src="https://img.shields.io/badge/Cost-free_to_use-1f9e7a?style=for-the-badge" alt="Free to use">
 </p>
 
+<p align="center"><b>Open the app: <a href="https://mallika-madhok.github.io/supplychain-healthcheck/">https://mallika-madhok.github.io/supplychain-healthcheck/</a></b></p>
+
 ## So, what is this?
 
-Small Canadian businesses that import apparel usually find out costs have gone up too late, when a shipment arrives late or an invoice comes in higher. This app gives them a heads-up.
+Small Canadian businesses that import apparel usually find out costs have gone up too late, when a shipment arrives late or an invoice comes in higher. [This app](https://mallika-madhok.github.io/supplychain-healthcheck/) gives them a heads-up.
 
 You enter what you buy, how much you spend and where it comes from. The app gives you a monthly pressure reading on three signals:
 
@@ -42,7 +44,7 @@ The data comes from the New York Fed, the Bank of Canada and Statistics Canada, 
 
 ## How do I use it?
 
-1. Pick what you mostly buy.
+1. Open the [app](https://mallika-madhok.github.io/supplychain-healthcheck/) and pick what you mostly buy.
 2. Enter your monthly purchases and how much of it you pay in US dollars.
 3. Add the countries you buy from.
 
