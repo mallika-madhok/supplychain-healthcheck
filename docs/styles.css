@@ -646,3 +646,57 @@ nav.tabs button { box-shadow: 0 1px 2px rgba(107, 29, 46, 0.08); }
   .ci { width: 40px; height: 40px; }
   .ci svg { width: 22px; height: 22px; }
 }
+
+/* ===== Header polish ===== */
+.masthead {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 0 46px;
+  border-bottom: none;
+  background:
+    radial-gradient(ellipse at 88% 10%, rgba(249, 217, 225, 0.28), transparent 50%),
+    radial-gradient(ellipse at 0% 120%, rgba(201, 162, 39, 0.16), transparent 45%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 30px, transparent 30px 90px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 30px, transparent 30px 90px),
+    repeating-linear-gradient(90deg, transparent 0 44px, rgba(201, 162, 39, 0.12) 44px 45px, transparent 45px 90px),
+    repeating-linear-gradient(0deg, transparent 0 44px, rgba(201, 162, 39, 0.12) 44px 45px, transparent 45px 90px),
+    linear-gradient(135deg, #3d0e1a 0%, var(--maroon) 55%, #7d2a3d 100%);
+}
+/* gold double rule along the bottom edge */
+.masthead::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 9px;
+  background:
+    linear-gradient(var(--gold), var(--gold)) bottom / 100% 4px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) top / 100% 1.5px no-repeat;
+  opacity: 0.95;
+}
+.masthead .eyebrow span {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 12px 5px 10px; border-radius: 999px;
+  border: 1px solid rgba(201, 162, 39, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f6d7df; font-size: 0.68rem;
+}
+.masthead .eyebrow span::before { content: "★"; color: var(--gold); font-size: 0.8rem; }
+.masthead h1 {
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  line-height: 1.08;
+  margin: 14px 0 14px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25);
+}
+.masthead h1 em {
+  font-style: italic; font-weight: 500;
+  color: #f9d0dc;
+}
+.masthead .sub { font-size: 0.98rem; line-height: 1.6; color: #f3d3dc; max-width: 58ch; }
+.corner-icons {
+  padding: 14px 18px 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  backdrop-filter: blur(4px);
+}
+@media (max-width: 760px) {
+  .corner-icons { display: inline-flex; padding: 10px 12px 8px; }
+  .masthead { padding: 28px 0 34px; }
+}
