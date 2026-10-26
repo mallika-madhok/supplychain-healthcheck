@@ -101,4 +101,4 @@ cd docs && python3 -m http.server 8000
 
 <p align="center"><img src="assets/divider.svg" width="100%"></p>
 
-<p align="center"><sub>Concept and methodology by <b>Mallika Madhok</b> · Data from the New York Fed, Bank of Canada and Statistics Canada</sub></p>
+<p align="center"><sub>Concept and methodology by <b>Mallika Madhok</b> · Built with help from Claude, Anthropic's AI assistant · Data from the New York Fed, Bank of Canada and Statistics Canada</sub></p>
