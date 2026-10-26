@@ -2,29 +2,27 @@
 
 **Try it live: https://mallika-madhok.github.io/supplychain-healthcheck/**
 
-**Why should you care?** Shipping delays, exchange rates and relying on too few supplier countries can raise a small importer's costs, and you usually find out from the invoice. This app shows you where each one stands today, puts the exchange rate in dollars for your own purchases, and suggests what to do, so you can order earlier, budget a cushion or add a supplier before it costs you.
+## Why should you care?
 
-## So, what is this?
+Three things you don't control decide what your next order really costs and when it arrives: global shipping, the exchange rate, and how much you rely on one supplier country. Most small importers only find out after the fact, when the shipment is already late or the invoice is already higher, and by then it is too late to do anything about it.
 
-For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they do not control. Larger players have analysts tracking the forces behind them. A smaller importer usually finds out when a shipment is late or an invoice comes in higher than expected.
+This app checks all three for your business and tells you what to do while you still have time to act:
 
-This app gives you an early read on three of them, using free public data, based on your own purchases:
+| When the app shows | What you can do |
+|---|---|
+| Shipping is worse than usual | Order earlier and add a few weeks to the delivery dates you plan around, especially for seasonal launches |
+| The exchange rate is moving against you | Budget the extra cost (shown in dollars for your purchases), lock in a rate with your bank before a big US dollar invoice, or check your retail prices still cover it |
+| Too much of your buying comes from one country | Start getting quotes from a second country before a tariff change or port strike forces you to |
+
+If all three are normal, that is useful too: keep ordering and budgeting as usual.
+
+## What it looks at
 
 1. **Shipping pressure:** how delayed and expensive it is to move goods around the world, compared with normal.
 2. **Currency:** how much the price of a US dollar, in Canadian dollars, has been swinging. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price has not changed.
-3. **Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder one disruption hits you, whether that is a tariff change, a port strike or a factory shutdown.
+3. **Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder one disruption hits you.
 
-## What you get
-
-You get three plain answers instead of a dashboard to interpret:
-
-⭐ **Shipping:** where it stands against every month since 1998, whether it is getting tighter or easing, and whether to order earlier.
-
-⭐ **Currency, in dollars:** what the exchange rate has done to your US dollar purchases compared with a year ago, and what a typical swing costs you per month.
-
-⭐ **Suppliers:** how exposed your country mix is, with a specific suggestion (for example, move 10 points from your biggest supplier to another major source) that you can try out with one click.
-
-Each one is marked Normal, Worse than usual or Much worse than usual and ends with a short "worth considering" note. A line chart shows how today compares with past squeezes like 2021 to 2022.
+Each one gets a status (Normal, Worse than usual or Much worse than usual), a scale showing where today sits, and a "What you can do" note with a specific next step.
 
 ## How do I use it?
 
@@ -32,7 +30,7 @@ Each one is marked Normal, Worse than usual or Much worse than usual and ends wi
 2. Enter your monthly purchases and the share paid in US dollars.
 3. Say roughly where your goods come from, by country.
 
-Move anything and the answers update straight away. Not sure where to start? There are starting points for "what Canada as a whole imports", "one country does most of it" and "spread across many".
+Only the countries you add get a slider. Move anything and the answers update straight away. Not sure where to start? There are starting points for "what Canada as a whole imports", "one country does most of it" and "spread across many".
 
 ## How the answers are calculated
 
@@ -56,10 +54,8 @@ Below 1 is shown as **Normal**, 1 to 2 as **Worse than usual**, and above 2 as *
 | Currency | How far the USD/CAD rate moved over the last 30 trading days (about six weeks) and how jumpy it has been over the last 90, both compared with history since 2017. The dollar figures are simple arithmetic: your monthly purchases times your USD share, times the change in the rate | Bank of Canada |
 | Suppliers | How concentrated your country mix is, measured by squaring each country's share and adding them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and shoe product lines over the last 12 months | Statistics Canada import records, by product and country |
 
-The line chart on the Overview tab averages the three z-scores equally, with currency multiplied by your USD share, so it moves when you change your profile.
-
 The tool does not predict your costs, and it says nothing about any particular supplier.
-It shows when conditions are getting tougher and what you could do about it.
+It shows when conditions are getting tougher and what you can do about it.
 
 ## Seeing how it works
 

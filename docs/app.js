@@ -48,6 +48,12 @@ let conn = null;
 let categories = [];
 let renderToken = 0;
 let refreshFn = () => {};
+let visibleCountries = new Set();
+
+// Show sliders only for countries the visitor buys from (plus "Other").
+function resetVisible(profile) {
+  visibleCountries = new Set(COUNTRIES.filter((c) => c.code === "OTHER" || profile.shares[c.code] > 0).map((c) => c.code));
+}
 
 // ---------- profile <-> URL ----------
 
@@ -105,6 +111,11 @@ function fmtSigned(n, digits = 2) {
 function money(n) {
   if (n === null || n === undefined || isNaN(n)) return "—";
   return (n < 0 ? "−" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-CA");
+}
+
+function monthName(ym) {
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleString("en-CA", { month: "long", year: "numeric" });
 }
 
 function pctText(frac, digits = 1) {
@@ -176,12 +187,15 @@ function zAxis(title) {
   return { gridcolor: cssVar("--border"), zeroline: true, zerolinecolor: cssVar("--text-muted"), title };
 }
 
-// Horizontal reference lines at the "worse than usual" (1) and "much worse than usual" (2) thresholds.
-function zBandShapes() {
-  const c = cssVar("--text-muted");
-  return [1, 2].map((y) => ({
-    type: "line", xref: "paper", x0: 0, x1: 1, y0: y, y1: y,
-    line: { color: c, width: 1, dash: "dot" },
+// Background bands matching the status labels: Normal (below 1), Worse (1 to 2), Much worse (above 2).
+function zoneShapes() {
+  return [
+    { lo: -20, hi: 1, color: "--status-good", opacity: 0.08 },
+    { lo: 1, hi: 2, color: "--status-warning", opacity: 0.16 },
+    { lo: 2, hi: 20, color: "--status-critical", opacity: 0.1 },
+  ].map((z) => ({
+    type: "rect", xref: "paper", x0: 0, x1: 1, y0: z.lo, y1: z.hi, layer: "below",
+    fillcolor: cssVar(z.color), opacity: z.opacity, line: { width: 0 },
   }));
 }
 
@@ -195,20 +209,6 @@ function line(x, y, name, color, extra) {
 
 function plot(id, traces, layout) {
   Plotly.newPlot(id, traces, layout, plotConfig);
-}
-
-function sparkline(id, x, y, color) {
-  plot(
-    id,
-    [{ x, y, type: "scatter", mode: "lines", line: { color, width: 1.8 }, hoverinfo: "skip" }],
-    {
-      margin: { l: 0, r: 0, t: 2, b: 2 },
-      paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-      xaxis: { visible: false }, yaxis: { visible: false, zeroline: false },
-      showlegend: false,
-      shapes: [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 0, y1: 0, line: { color: cssVar("--border"), width: 1 } }],
-    }
-  );
 }
 
 // ---------- DuckDB ----------
@@ -341,8 +341,7 @@ order by month`;
 }
 
 function compositeSql(profile, hhi) {
-  const usd = (profile.usd / 100).toFixed(2);
-  return `-- Your profile: ${categoryLabel(profile.category)}, ${profile.usd}% USD-invoiced, mix concentration ${fmt(hhi, 3)}
+  return `-- The three readings, month by month. Your mix: ${categoryLabel(profile.category)}, concentration ${fmt(hhi, 3)}
 with freight as (
   select date_trunc('month', month) as m, gscpi_zscore as freight_z
   from read_parquet('mart_freight_pressure.parquet')
@@ -366,9 +365,7 @@ origin as (  -- your mix's concentration vs. that benchmark
 select strftime(f.m, '%Y-%m') as month,
        f.freight_z,
        c.currency_z,
-       c.currency_z * ${usd} as currency_exposed_z,
-       o.origin_z,
-       (f.freight_z + c.currency_z * ${usd} + coalesce(o.origin_z, 0)) / 3 as composite_z
+       o.origin_z
 from freight f
 join currency c using (m)
 cross join origin o
@@ -410,15 +407,15 @@ function shippingReading(ship) {
     : `Easier than ${100 - pct}% of months since 1998`;
   let consider;
   if (z > 1 && delta > 0.3) {
-    consider = "Order earlier than usual and ask suppliers to confirm ship dates. Expect transit and delivery times to run longer.";
+    consider = "Place orders for your next season earlier than usual and add a few weeks to the delivery dates you plan around. Ask suppliers to confirm ship dates now.";
+  } else if (z > 1 && trend === "easing") {
+    consider = "Shipping is easing but still strained. Keep a few extra weeks of buffer on time-sensitive orders, like seasonal launches, but there is no need to rush everything forward.";
   } else if (z > 1) {
-    consider = trend === "easing"
-      ? "Conditions are easing but still strained. Keep a few extra weeks of buffer on time-sensitive orders."
-      : "Conditions remain strained. Keep a few extra weeks of buffer on time-sensitive orders.";
+    consider = "Keep a few extra weeks of buffer on time-sensitive orders, like seasonal launches, and ask suppliers to confirm ship dates.";
   } else if (delta > 0.3) {
-    consider = "Shipping is normal now but getting tighter. Worth watching before you place large orders.";
+    consider = "Shipping is normal but tightening. If a big order is coming up, placing it sooner rather than later is a cheap safeguard.";
   } else {
-    consider = "Nothing here calls for pulling orders forward.";
+    consider = "Order on your usual schedule. Nothing here calls for pulling orders forward.";
   }
   return { z, state, rank, trend, consider, pct, delta };
 }
@@ -447,10 +444,16 @@ function currencyReading(fx, currencyZ, profile) {
             : `That is about ${money(Math.abs(fx.extra_cost_vs_year_ago))} a month ${dir} on ${money(spend)} of USD purchases. `) +
       `In a typical six-week stretch the rate moves ${pctText(fx.typical_six_week_swing)}, or about ${money(swingCost)} a month for you.`
     : `In a typical six-week stretch the rate moves ${pctText(fx.typical_six_week_swing)}. Enter your monthly purchases to see this in dollars.`;
-  const consider =
+  const cushion = dollars
+    ? `about ${pctText(fx.typical_six_week_swing, 0)} (${money(swingCost)} a month)`
+    : `about ${pctText(fx.typical_six_week_swing, 0)}`;
+  let consider =
     z > 1
-      ? "The rate has been moving or swinging more than usual. If you have large US dollar invoices coming up, ask your bank about locking in a rate."
-      : `The rate is behaving normally. When you budget, leave a cushion of about ${pctText(fx.typical_six_week_swing, 0)} for currency swings.`;
+      ? `Before your next big US dollar invoice, ask your bank about locking in a rate (a forward contract), and budget a cushion of ${cushion} in case it keeps moving.`
+      : `Budget a cushion of ${cushion} for normal currency swings.`;
+  if (change >= 0.03) {
+    consider = `Your US dollar costs are up ${pctText(change)} on last year, so check that your retail prices still cover it. ` + consider;
+  }
   return { z, exposed: true, spend, headline, detail, consider };
 }
 
@@ -467,21 +470,32 @@ function supplierReading(profile, hhi, marketHhi, originZ, shift) {
     (marketHhi !== null ? `Canada's imports of this product score ${fmt(marketHhi, 2)}. ` : "") +
     "Lower means spread across more countries.";
   let consider;
-  if (shift) {
+  if (shift && originZ !== null && originZ > 1) {
     consider =
-      `Moving ${shift.move} points from ${COUNTRY_NAME[shift.from]} to ${COUNTRY_NAME[shift.to]} would lower your score from ${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}. ` +
-      "That way one disruption (a tariff change, a port strike, a factory shutdown) reaches less of your stock.";
+      `Start getting quotes from suppliers in ${COUNTRY_NAME[shift.to]}. Moving ${shift.move} points of your buying there from ${COUNTRY_NAME[shift.from]} ` +
+      `would lower your score from ${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}, so one tariff change, port strike or factory shutdown reaches less of your stock.`;
   } else if (originZ !== null && originZ > 1) {
-    consider = "Your mix is more concentrated than usual. Adding a second or third supplier country would reduce the risk of a single disruption.";
+    consider = "Start sampling a second supplier country, so a single tariff change or port strike can't hit most of your stock at once.";
   } else {
-    consider = "Your mix is already well spread. No change needed.";
+    consider = "Your mix is already well spread. Keep it that way when you add new suppliers.";
   }
   return { z: originZ, headline, detail, consider };
 }
 
 // ---------- rendering ----------
 
-function signalCard({ key, title, z, headline, detail, consider, tab }) {
+// Where today sits on the Normal / Worse / Much worse scale (z from -2 to 4).
+function gauge(z) {
+  const min = -2, max = 4;
+  const dot = z === null || z === undefined || isNaN(z)
+    ? ""
+    : `<div class="gauge-dot" style="left:${((Math.max(min, Math.min(max, z)) - min) / (max - min)) * 100}%"><span>Today</span></div>`;
+  return `<div class="gauge" title="Where today sits compared with this signal's own history">` +
+    `<div class="gauge-bar"><div class="gz ok"></div><div class="gz warn"></div><div class="gz bad"></div>${dot}</div>` +
+    `<div class="gauge-labels"><span>Normal</span><span>Worse</span><span>Much worse</span></div></div>`;
+}
+
+function signalCard({ title, z, headline, detail, consider, tab }) {
   const c = classifyZ(z);
   const el = document.createElement("div");
   el.className = "signal";
@@ -489,34 +503,76 @@ function signalCard({ key, title, z, headline, detail, consider, tab }) {
     `<div class="signal-head"><span class="signal-title">${title}</span>` +
     `<span class="stat-tag" style="background:${c.color}">${c.label}</span></div>` +
     `<div class="signal-headline">${headline}</div>` +
+    gauge(z) +
+    (consider ? `<div class="consider"><span class="consider-label">What you can do</span>${consider}</div>` : "") +
     `<div class="signal-detail">${detail}</div>` +
-    `<div class="signal-spark" id="spark-${key}"></div>` +
-    (consider ? `<div class="consider"><span class="consider-label">Worth considering</span>${consider}</div>` : "") +
     `<a href="#" data-goto="${tab}">More on ${title.toLowerCase()} &rarr;</a>`;
   return el;
 }
 
+function note(x, y, text, ay = -34) {
+  return {
+    x, y, text, showarrow: true, arrowhead: 0, arrowcolor: cssVar("--text-muted"), ax: 0, ay,
+    font: { family: FONT, size: 11, color: cssVar("--text-primary") },
+    bgcolor: cssVar("--surface"), bordercolor: cssVar("--border"), borderpad: 3,
+  };
+}
+
 function renderStaticCharts(freightRows, currencyRows) {
   const months = freightRows.map((r) => r.month);
+  const fz = freightRows.map((r) => r.gscpi_zscore);
+  const peak = fz.indexOf(Math.max(...fz));
+  const lastF = fz.length - 1;
   plot(
     "chart-freight",
-    [line(months, freightRows.map((r) => r.gscpi_zscore), "Shipping pressure", cssVar("--series-1"))],
-    baseLayout({ showlegend: false, yaxis: zAxis("tighter than usual →"), shapes: zBandShapes() })
+    [line(months, fz, "Shipping", cssVar("--maroon-line"), { hovertemplate: "%{x|%b %Y}: %{y:.2f}<extra></extra>" })],
+    baseLayout({
+      showlegend: false,
+      yaxis: { ...zAxis("tighter than usual →"), range: [Math.min(...fz) - 0.3, Math.max(...fz) + 0.6] },
+      shapes: zoneShapes(),
+      annotations: [
+        note(months[peak], fz[peak], "2021–22 shipping crisis", -26),
+        note(months[lastF], fz[lastF], "Today", -40),
+      ],
+    })
   );
 
   const dates = currencyRows.map((r) => r.date);
+  const lz = currencyRows.map((r) => r.level_change_zscore);
+  const vz = currencyRows.map((r) => r.volatility_zscore);
+  const all = lz.concat(vz);
   plot(
     "chart-currency",
     [
-      line(dates, currencyRows.map((r) => r.level_change_zscore), "Moved a lot lately", cssVar("--series-1")),
-      line(dates, currencyRows.map((r) => r.volatility_zscore), "Been jumpy", cssVar("--series-2")),
+      line(dates, lz, "Moved a lot lately", cssVar("--series-1")),
+      line(dates, vz, "Been jumpy", cssVar("--series-2")),
     ],
-    baseLayout({ yaxis: zAxis("more unusual →"), shapes: zBandShapes() })
+    baseLayout({ yaxis: { ...zAxis("more unusual →"), range: [Math.min(...all) - 0.3, Math.max(...all) + 0.3] }, shapes: zoneShapes() })
   );
+
+  // Exchange rate, last five years, with today and a year ago marked.
+  const lastDate = new Date(dates[dates.length - 1]);
+  const fiveYears = new Date(lastDate); fiveYears.setFullYear(lastDate.getFullYear() - 5);
+  const yearAgo = new Date(lastDate); yearAgo.setFullYear(lastDate.getFullYear() - 1);
+  const recent = currencyRows.filter((r) => new Date(r.date) >= fiveYears);
+  const ago = currencyRows.filter((r) => new Date(r.date) <= yearAgo).pop();
+  const now = currencyRows[currencyRows.length - 1];
   plot(
     "chart-rate",
-    [line(dates, currencyRows.map((r) => r.usd_cad_rate), "CAD per USD", cssVar("--series-3"))],
-    baseLayout({ showlegend: false, yaxis: { gridcolor: cssVar("--border"), title: "CAD per USD" } })
+    [
+      line(recent.map((r) => r.date), recent.map((r) => r.usd_cad_rate), "CAD per USD", cssVar("--series-3"),
+        { hovertemplate: "%{x|%d %b %Y}: %{y:.3f} CAD<extra></extra>" }),
+      { x: [ago.date, now.date], y: [ago.usd_cad_rate, now.usd_cad_rate], type: "scatter", mode: "markers",
+        marker: { size: 9, color: cssVar("--maroon-line") }, hoverinfo: "skip" },
+    ],
+    baseLayout({
+      showlegend: false,
+      yaxis: { gridcolor: cssVar("--border"), title: "Canadian dollars per US dollar" },
+      annotations: [
+        note(ago.date, ago.usd_cad_rate, `A year ago: ${fmt(ago.usd_cad_rate, 3)}`, 36),
+        note(now.date, now.usd_cad_rate, `Today: ${fmt(now.usd_cad_rate, 3)}`, -36),
+      ],
+    })
   );
 }
 
@@ -534,7 +590,7 @@ function renderShipDetail(ship, r) {
       ["How it ranks", r.rank],
       ["Last 3 months", r.trend.charAt(0).toUpperCase() + r.trend.slice(1)],
     ]) +
-    `<div class="consider"><span class="consider-label">Worth considering</span>${r.consider}</div>`;
+    `<div class="consider"><span class="consider-label">What you can do</span>${r.consider}</div>`;
 }
 
 function renderFxDetail(fx, r, profile) {
@@ -551,7 +607,7 @@ function renderFxDetail(fx, r, profile) {
           ["Extra cost vs. a year ago", dollars ? `${money(fx.extra_cost_vs_year_ago)} a month` : "—"],
           ["A typical six-week swing", dollars ? `${pctText(fx.typical_six_week_swing)}, about ${money(fx.cost_of_a_typical_swing)} a month` : pctText(fx.typical_six_week_swing)],
         ]) +
-        `<div class="consider"><span class="consider-label">Worth considering</span>${r.consider}</div>`
+        `<div class="consider"><span class="consider-label">What you can do</span>${r.consider}</div>`
       : `<p class="desc">${r.detail}</p>`);
 }
 
@@ -568,14 +624,16 @@ function renderShiftCard(profile, shift, hhi, marketHhi, originZ) {
     `<p class="desc">The score runs from near 0 (spread across many countries) to 1 (one country supplies everything). ` +
     `The status compares your score with how concentrated sourcing typically is across Canadian apparel product lines.</p>`;
   if (shift) {
+    const needed = originZ !== null && originZ > 1;
     html +=
-      `<div class="consider"><span class="consider-label">Worth considering</span>` +
+      `<div class="consider"><span class="consider-label">${needed ? "What you can do" : "Optional"}</span>` +
+      (needed ? "" : "Your mix is fine as it is. If you want to spread it further: ") +
       `Moving ${shift.move} points of your buying from <strong>${COUNTRY_NAME[shift.from]}</strong> (${Math.round(shift.topShare)}% today) ` +
       `to <strong>${COUNTRY_NAME[shift.to]}</strong>, one of the largest sources of Canadian imports of this product, would lower your score from ` +
       `${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}.` +
       `<div><button type="button" class="btn" id="apply-shift">Try that change</button></div></div>`;
   } else {
-    html += `<div class="consider"><span class="consider-label">Worth considering</span>` +
+    html += `<div class="consider"><span class="consider-label">What you can do</span>` +
       (originZ !== null && originZ > 1
         ? "Your mix is more concentrated than usual. Adding a second or third supplier country would cut the risk of a single disruption."
         : "Your mix is already well spread. No change needed.") + `</div>`;
@@ -585,6 +643,7 @@ function renderShiftCard(profile, shift, hhi, marketHhi, originZ) {
   if (btn) {
     btn.addEventListener("click", () => {
       profile.shares = shift.shares;
+      resetVisible(profile);
       syncControls(profile);
       refreshFn();
     });
@@ -663,10 +722,11 @@ async function renderResults(profile) {
   ].sort((a, b) => b.z - a.z);
   const top = ranked[0];
   const topBand = classifyZ(top.z);
+  const when = monthName(ship.month);
   document.getElementById("glance-summary").textContent =
     topBand.label === "Normal"
-      ? `All three signals are in a normal range for ${ship.month}. Nothing needs action right now, and the cards below show where each one stands.`
-      : `For ${ship.month}, the biggest pressure on your business is ${top.label} (${topBand.phrase}). Here is where each of the three stands.`;
+      ? `All three are normal for ${when}. Keep ordering and budgeting as usual.`
+      : `For ${when}, the one to deal with first is ${top.label} (${topBand.phrase}). Start with the steps on that card.`;
 
   // Cards
   const signals = document.getElementById("signals");
@@ -687,26 +747,11 @@ async function renderResults(profile) {
       switchTab(a.dataset.goto);
     })
   );
-  const x = rows.map((r) => r.month);
-  sparkline("spark-freight", x.slice(-60), rows.map((r) => r.freight_z).slice(-60), cssVar("--series-1"));
-  sparkline("spark-currency", x.slice(-60), rows.map((r) => r.currency_z).slice(-60), cssVar("--series-2"));
-  sparkline("spark-origin", originRows.map((r) => r.month), originRows.map((r) => r.hhi), cssVar("--series-3"));
 
   // Detail tabs
   renderShipDetail(ship, shipR);
   renderFxDetail(fx, fxR, profile);
   renderShiftCard(profile, shift, hhi, marketHhi, originZ);
-
-  // Combined line
-  plot(
-    "chart-composite",
-    [
-      line(x, rows.map((r) => r.composite_z), "Combined", cssVar("--maroon-line"), { line: { color: cssVar("--maroon-line"), width: 2.6 } }),
-      line(x, rows.map((r) => r.freight_z), "Shipping", cssVar("--series-1"), { line: { color: cssVar("--series-1"), width: 1.4 }, opacity: 0.55 }),
-      line(x, rows.map((r) => r.currency_exposed_z), "Currency (scaled to your USD share)", cssVar("--series-2"), { line: { color: cssVar("--series-2"), width: 1.4 }, opacity: 0.7 }),
-    ],
-    baseLayout({ yaxis: zAxis("more pressure →"), shapes: zBandShapes() })
-  );
 
   renderOriginCharts(profile, hhi, originRows, mix);
 }
@@ -726,10 +771,22 @@ function buildCountrySliders(profile, onChange) {
   COUNTRIES.forEach((c) => {
     const field = document.createElement("div");
     field.className = "field";
+    field.id = `field-${c.code}`;
     field.innerHTML =
-      `<label for="slider-${c.code}">${c.label} <span class="field-value" id="val-${c.code}"></span></label>` +
+      `<label for="slider-${c.code}"><span>${c.label}` +
+      (c.code === "OTHER" ? "" : ` <button type="button" class="remove" aria-label="Remove ${c.label}">remove</button>`) +
+      `</span><span class="field-value" id="val-${c.code}"></span></label>` +
       `<input type="range" min="0" max="100" step="1" id="slider-${c.code}">`;
     container.appendChild(field);
+    const remove = field.querySelector(".remove");
+    if (remove) {
+      remove.addEventListener("click", () => {
+        profile.shares[c.code] = 0;
+        visibleCountries.delete(c.code);
+        syncControls(profile);
+        onChange();
+      });
+    }
     const input = field.querySelector("input");
     input.addEventListener("input", () => {
       profile.shares[c.code] = Number(input.value);
@@ -741,6 +798,7 @@ function buildCountrySliders(profile, onChange) {
 
 function syncControls(profile) {
   COUNTRIES.forEach((c) => {
+    document.getElementById(`field-${c.code}`).hidden = !visibleCountries.has(c.code);
     document.getElementById(`slider-${c.code}`).value = profile.shares[c.code];
     document.getElementById(`val-${c.code}`).textContent = profile.shares[c.code] + "%";
   });
@@ -749,6 +807,11 @@ function syncControls(profile) {
   document.getElementById("category-select").value = profile.category;
   const budget = document.getElementById("budget-input");
   if (document.activeElement !== budget) budget.value = profile.budget;
+  const add = document.getElementById("add-country");
+  const hidden = COUNTRIES.filter((c) => !visibleCountries.has(c.code));
+  add.hidden = hidden.length === 0;
+  add.innerHTML = `<option value="">+ Add a country</option>` +
+    hidden.map((c) => `<option value="${c.code}">${c.label}</option>`).join("");
   updateShareTotal(profile);
 }
 
@@ -799,7 +862,7 @@ function switchTab(tab) {
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll("section.view").forEach((v) => v.classList.toggle("active", v.id === "view-" + tab));
   // Charts drawn while their tab was hidden have no width; resize once visible.
-  document.querySelectorAll(`#view-${tab} .chart, #view-${tab} .signal-spark`).forEach((el) => {
+  document.querySelectorAll(`#view-${tab} .chart`).forEach((el) => {
     if (el.data) Plotly.Plots.resize(el);
   });
   writeStateToUrl(window.__profile, tab);
@@ -831,8 +894,16 @@ async function main() {
     return renderResults(profile);
   };
 
+  resetVisible(profile);
   buildCountrySliders(profile, refreshFn);
   syncControls(profile);
+  document.getElementById("add-country").addEventListener("change", (e) => {
+    const code = e.target.value;
+    if (!code) return;
+    visibleCountries.add(code);
+    syncControls(profile);
+    document.getElementById(`slider-${code}`).focus();
+  });
 
   document.getElementById("slider-usd").addEventListener("input", (e) => {
     profile.usd = Number(e.target.value);
@@ -851,6 +922,7 @@ async function main() {
     btn.addEventListener("click", async () => {
       profile.shares =
         btn.dataset.preset === "canada" ? await canadaMix(profile.category) : sharesFrom(PRESETS[btn.dataset.preset]);
+      resetVisible(profile);
       syncControls(profile);
       refreshFn();
     })
@@ -867,6 +939,10 @@ async function main() {
 
   document.querySelectorAll("nav.tabs button").forEach((btn) =>
     btn.addEventListener("click", () => switchTab(btn.dataset.tab))
+  );
+  // Charts inside a collapsed section have no width until it is opened.
+  document.querySelectorAll("details").forEach((d) =>
+    d.addEventListener("toggle", () => d.querySelectorAll(".chart").forEach((el) => el.data && Plotly.Plots.resize(el)))
   );
 
   await renderResults(profile);

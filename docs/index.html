@@ -14,10 +14,10 @@
       <div class="eyebrow">For small apparel and footwear importers in Canada</div>
       <h1>Canadian Apparel Import Pressure Monitor</h1>
       <p class="sub">
-        Tell us what you buy and where it comes from. See how shipping, the exchange rate and
-        your supplier mix are affecting your costs this month, in dollars where we can, and
-        what is worth considering. Everything is calculated in your browser, and nothing you
-        enter is sent anywhere.
+        Shipping delays, the exchange rate and leaning on one supplier country can all raise
+        what your next order costs. Most small importers only find out after the fact. Enter
+        your business below and see where each one stands today, what it means in dollars, and
+        what you can do about it while there is still time.
       </p>
     </div>
   </header>
@@ -36,7 +36,7 @@
     <section class="view active" id="view-results">
       <div class="card">
         <h2>Your business</h2>
-        <div class="desc">Rough numbers are fine. Everything below updates as you change them.</div>
+        <div class="desc">Rough numbers are fine. Your results update as you type.</div>
         <div class="profile-top">
           <div class="field">
             <label for="category-select"><span><span class="step">1</span>What you mostly buy</span></label>
@@ -53,7 +53,10 @@
         </div>
         <div class="field-title"><span class="step">4</span>Where it comes from (share of your purchases by country)</div>
         <div class="profile-grid" id="country-sliders"></div>
-        <div class="share-total" id="share-total"></div>
+        <div class="country-tools">
+          <select id="add-country" aria-label="Add a country"></select>
+          <span class="share-total" id="share-total"></span>
+        </div>
         <div class="presets">
           <span class="presets-label">Not sure? Start from:</span>
           <div class="preset-row">
@@ -65,20 +68,14 @@
       </div>
 
       <div class="card glance">
-        <h2>This month at a glance</h2>
+        <h2>Where you stand this month</h2>
         <p class="glance-summary" id="glance-summary"></p>
         <div class="legend">
-          <span style="--dot:var(--status-good)"><strong>Normal:</strong> within a typical range</span>
-          <span style="--dot:var(--status-warning)"><strong>Worse than usual:</strong> unusual, worth a look</span>
-          <span style="--dot:var(--status-critical)"><strong>Much worse than usual:</strong> rare, act on it</span>
+          <span style="--dot:var(--status-good)"><strong>Normal:</strong> nothing to change</span>
+          <span style="--dot:var(--status-warning)"><strong>Worse than usual:</strong> plan for it</span>
+          <span style="--dot:var(--status-critical)"><strong>Much worse than usual:</strong> act now</span>
         </div>
         <div class="signals" id="signals"></div>
-      </div>
-
-      <div class="card">
-        <h2>Pressure on your business since 2017</h2>
-        <div class="desc">The three signals combined into one line (an equal-weighted average), so you can see how today compares with past squeezes like 2021&ndash;22. Currency is scaled by your USD share and supplier concentration by your own country mix, so the line moves when you change your profile.</div>
-        <div class="chart tall" id="chart-composite"></div>
         <details class="sql-drawer">
           <summary>See the data and SQL behind this</summary>
           <pre id="sql-composite"></pre>
@@ -98,9 +95,9 @@
         </details>
       </div>
       <div class="card">
-        <h2>Shipping pressure over time</h2>
-        <div class="desc">The New York Fed's Global Supply Chain Pressure Index blends freight costs (sea and air) with delivery times, order backlogs and stock levels across major economies. Above the dotted lines means tighter than usual: 1 is unusual, 2 is rare. The 2021&ndash;22 spike is the worst on record.</div>
-        <div class="chart" id="chart-freight"></div>
+        <h2>Shipping since 1998</h2>
+        <div class="desc">Each point is one month of the New York Fed's Global Supply Chain Pressure Index, which blends freight costs with delivery times, order backlogs and stock levels across major economies. The coloured bands match the status labels: green is normal, amber is worse than usual, red is much worse.</div>
+        <div class="chart tall" id="chart-freight"></div>
         <details class="sql-drawer">
           <summary>See the data and SQL behind this</summary>
           <pre id="sql-freight"></pre>
@@ -120,13 +117,13 @@
         </details>
       </div>
       <div class="card">
-        <h2>How unusual the recent moves are</h2>
-        <div class="desc">Two separate questions, each compared with its own history since March 2017: <strong>has the rate moved a lot lately</strong> (change over about six weeks) and <strong>has it been jumpy</strong> (day-to-day volatility over about four months). Above the dotted lines is unusual (1) or rare (2).</div>
-        <div class="chart" id="chart-currency"></div>
-        <div class="desc" style="margin-top:14px">The exchange rate itself, in Canadian dollars per US dollar. When it goes up, USD-priced goods cost you more.</div>
-        <div class="chart" id="chart-rate"></div>
+        <h2>The exchange rate over the last five years</h2>
+        <div class="desc">How many Canadian dollars one US dollar costs. When the line goes up, anything you pay for in US dollars costs you more.</div>
+        <div class="chart tall" id="chart-rate"></div>
         <details class="sql-drawer">
-          <summary>See the data and SQL behind this</summary>
+          <summary>How the status is worked out</summary>
+          <div class="desc" style="margin-top:10px">The status asks two questions, each compared with history since March 2017: <strong>has the rate moved a lot lately</strong> (over about six weeks) and <strong>has it been jumpy</strong> (day-to-day swings over about four months). The two are averaged. Coloured bands match the status labels.</div>
+          <div class="chart" id="chart-currency"></div>
           <pre id="sql-currency"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-currency"></table></div>
         </details>
@@ -140,20 +137,17 @@
       </div>
       <div class="card">
         <h2>Your mix compared with Canada's</h2>
-        <div class="desc">Where Canada's imports of this product come from (latest 12 months of data) next to your own mix. Countries outside your list are grouped as "Other".</div>
+        <div class="desc">Where Canada's imports of this product come from (latest 12 months of data) next to your own mix. If Canada already buys a lot from a country you don't use, that country is a proven option for this product.</div>
         <div class="chart" id="chart-mix"></div>
         <details class="sql-drawer">
           <summary>See the data and SQL behind this</summary>
           <pre id="sql-mix"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-mix"></table></div>
         </details>
-      </div>
-      <div class="card">
-        <h2>How concentrated Canada's imports are over time</h2>
-        <div class="desc">The concentration score runs from near 0 (spread across many countries) to 1 (one country supplies everything). The dashed line is your mix.</div>
-        <div class="chart" id="chart-origin"></div>
         <details class="sql-drawer">
-          <summary>See the data and SQL behind this</summary>
+          <summary>How concentrated Canada's imports have been over time</summary>
+          <div class="desc" style="margin-top:10px">The concentration score runs from near 0 (spread across many countries) to 1 (one country supplies everything). The dashed line is your mix.</div>
+          <div class="chart" id="chart-origin"></div>
           <pre id="sql-origin"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-origin"></table></div>
         </details>
@@ -169,7 +163,7 @@
         <p>Three things you don't control can move your costs: how hard it is to ship goods
         around the world, the Canadian dollar against the US dollar, and how much of your
         buying depends on a few countries. This page puts a plain reading on each, translates
-        the currency one into dollars, and suggests what to consider. It does not forecast
+        the currency one into dollars, and turns each reading into a concrete next step. It does not forecast
         your costs, and it says nothing about any specific supplier or brand.</p>
 
         <h3>What you enter</h3>
@@ -208,8 +202,7 @@
           points (or a third of your top country's share, if smaller) to the largest Canadian
           import source you rely on least.</li>
         </ul>
-        <p>The line on the Overview tab averages the three z-scores equally, with currency
-        multiplied by your USD share.</p>
+        
 
         <h3>Data sources</h3>
         <table>
