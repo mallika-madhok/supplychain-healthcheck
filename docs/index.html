@@ -6,7 +6,7 @@
   <title>Canadian Apparel Import Pressure Monitor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%236b1d2e%27/%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Open+Sans:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="styles.css?v=202610252001">
+  <link rel="stylesheet" href="styles.css?v=202610252017">
 </head>
 <body>
   <header class="masthead">
@@ -110,7 +110,7 @@
       </div>
       <div class="card">
         <h2>Shipping over time</h2>
-        <div class="desc">Each point is one month of the New York Fed's Global Supply Chain Pressure Index, which blends freight costs with delivery times, order backlogs and stock levels across major economies. The coloured bands match the status labels: green is normal, amber is worse than usual, red is much worse.</div>
+        <div class="desc">Each point is one month of the New York Fed's Global Supply Chain Pressure Index, which tracks how much it costs to ship goods and how long deliveries are taking around the world. The coloured bands match the status labels: green is normal, amber is worse than usual, red is much worse.</div>
         <div class="range" id="range-freight"></div>
         <div class="chart tall" id="chart-freight"></div>
         <details class="sql-drawer">
@@ -138,7 +138,7 @@
         <div class="chart tall" id="chart-rate"></div>
         <details class="sql-drawer">
           <summary>How the status is worked out</summary>
-          <div class="desc" style="margin-top:10px">The status asks two questions, each compared with history since March 2017: <strong>has the rate moved a lot lately</strong> (over about six weeks) and <strong>has it been jumpy</strong> (day-to-day swings over about four months). The two are averaged. Coloured bands match the status labels.</div>
+          <div class="desc" style="margin-top:10px">The status asks two questions, each compared with history since March 2017: <strong>has the rate changed a lot recently</strong> (over about six weeks) and <strong>has it been going up and down a lot</strong> (over about four months). The two are averaged. Coloured bands match the status labels.</div>
           <div class="chart" id="chart-currency"></div>
           <pre id="sql-currency"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-currency"></table></div>
@@ -148,7 +148,7 @@
 
     <section class="view" id="view-origin">
       <div class="card">
-        <h2>How exposed are your suppliers? <span class="h-sub" id="origin-cat-name"></span></h2>
+        <h2>How much you rely on one country <span class="h-sub" id="origin-cat-name"></span></h2>
         <div id="shift-card"></div>
       </div>
       <div class="card">
@@ -162,8 +162,8 @@
           <div class="result-table-wrap"><table class="result-table" id="table-mix"></table></div>
         </details>
         <details class="sql-drawer">
-          <summary>How concentrated Canada's imports have been over time</summary>
-          <div class="desc" style="margin-top:10px">The concentration score runs from near 0 (spread across many countries) to 1 (one country supplies everything). The dashed line is your mix. Uses the same time window as the chart above.</div>
+          <summary>How much Canada relies on one country for this product, over time</summary>
+          <div class="desc" style="margin-top:10px">The reliance score runs from near 0 (spread across many countries) to 1 (everything comes from one country). The dashed line is your mix. Uses the same time window as the chart above.</div>
           <div class="chart" id="chart-origin"></div>
           <pre id="sql-origin"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-origin"></table></div>
@@ -190,35 +190,34 @@
         address.</p>
 
         <h3>How the status labels are decided</h3>
-        <p>Each signal is compared with its own history and expressed as a <strong>z-score</strong>:
-        how far today's value sits from its average, counted in <strong>standard deviations</strong>
-        (the size of a typical swing for that signal). Around 0 is average, up to 1 is a normal
-        swing, 1 to 2 is unusual, 2 to 3 is rare, and 3 or more means something is really off.
+        <p>Each signal is compared with its own history and given a <strong>z-score</strong>: how far
+        today is from its average, measured in <strong>standard deviations</strong> (the size of a normal
+        up-and-down for that signal). Around 0 is average, up to 1 is within the normal range, 1 to 2 is
+        unusual, 2 to 3 is rare, and 3 or more means something is really off.
         Below 1 is shown as <strong>Normal</strong>, 1 to 2 as <strong>Worse than usual</strong>, and above 2 as
-        <strong>Much worse than usual</strong>. These cut-offs are my first-pass choice and haven't been tested
-        against real price changes.</p>
+        <strong>Much worse than usual</strong>. These cut-offs are a first-pass choice and haven't been tested
+        against real price changes yet.</p>
 
         <h3>The three signals</h3>
         <ul>
-          <li><strong>Shipping.</strong> The New York Fed's Global Supply Chain Pressure Index, compared
-          with its full history since 1998. The longer record matters here: the last 10 years include the
-          2021&ndash;22 crisis, which on its own would make real strain look normal. The ranking ("tighter than X% of months") covers the last 10 years,
-          and the charts show 10 years by default, with quick picks and a date range to zoom in, and whether it has been rising or easing over the last three months. This
-          is global, so it is the same for every business.</li>
-          <li><strong>Currency.</strong> Two measures of the US/Canadian dollar rate, each compared with
-          history since 2017 and averaged for the status: how far the rate has moved over the
-          last 30 trading days (about six weeks), and how jumpy it has been over the last 90
-          (about four months). The dollar figures are simple arithmetic on your inputs:
-          your USD purchases are your monthly purchases times your USD share, and a rate
-          move of X% changes what those purchases cost in Canadian dollars by X%. "A typical
-          swing" is the standard deviation of the six-week move since 2017.</li>
-          <li><strong>Suppliers.</strong> A concentration score for your country mix: square each country's
-          share and add them up (a single country at 100% scores 1, an even spread scores
-          close to 0). It is compared with the same score for Canada's imports across all
-          clothing and footwear product lines over the last 12 months. "Other" is treated as
-          spread across many suppliers, so it adds nothing.</li>
+          <li><strong>Shipping.</strong> The New York Fed's Global Supply Chain Pressure Index, which tracks
+          how much it costs to ship goods and how long deliveries are taking around the world. Today is
+          compared with the full record since 1998. A shorter record would be dominated by the
+          2021&ndash;22 crisis, which would make bad conditions look normal. The "worse than X% of months"
+          line covers the last 10 years, and "last 3 months" shows whether it is getting better or worse.
+          This is worldwide, so it is the same for every business.</li>
+          <li><strong>Currency.</strong> Two checks on the US/Canadian dollar rate, each compared with
+          history since 2017 and averaged: how much the rate has changed over the last 30 business days
+          (about six weeks), and how much it has gone up and down over the last 90 (about four months).
+          The dollar figures are simple arithmetic: your monthly purchases times the share paid in US
+          dollars, times the change in the rate. "Normal change over six weeks" is the standard deviation
+          of the six-week change since 2017.</li>
+          <li><strong>Suppliers.</strong> A reliance score for your country mix: square each country's
+          share and add them up (one country at 100% scores 1, an even spread scores close to 0). It is
+          compared with the same score for Canada's imports across all clothing and footwear product
+          lines over the last 12 months. "Other" counts as spread across many suppliers, so it adds
+          nothing.</li>
         </ul>
-        
 
         <h3>Data sources</h3>
         <table>
@@ -230,13 +229,13 @@
 
         <h3>Limits to keep in mind</h3>
         <ul>
-          <li>Dollar figures assume your purchase volume stays the same and that you pay spot
-          rates. If you hedge, or your supplier changes its prices when the rate moves, your
-          real numbers will differ.</li>
+          <li>Dollar figures assume you keep buying the same amount and pay today's exchange rate.
+          If you have locked in a rate with your bank, or your supplier changes its prices when the
+          rate moves, your real numbers will differ.</li>
           <li>Country means where customs says the goods were made, which is not always where
           they were sewn.</li>
           <li>About 0.0001% of import value has no country recorded and is left out of the
-          concentration figures.</li>
+          reliance figures.</li>
           <li>Past history is a guide to what is unusual, not a forecast. This is not financial
           advice.</li>
         </ul>
@@ -257,6 +256,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
-  <script type="module" src="app.js?v=202610252001"></script>
+  <script type="module" src="app.js?v=202610252017"></script>
 </body>
 </html>

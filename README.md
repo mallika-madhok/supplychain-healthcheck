@@ -84,9 +84,9 @@ A standard deviation is the size of a typical swing for a signal. Measuring ever
 
 | Signal | What is measured | Source |
 |---|---|---|
-| <img src="assets/icon-shipping.svg" width="18"> Shipping | The Global Supply Chain Pressure Index, which combines shipping rates with supplier delivery times, order backlogs and stock levels across major economies. It is judged against its full history since 1998, because a shorter baseline would be dominated by the 2021–22 crisis and make real strain look normal. | New York Fed |
+| <img src="assets/icon-shipping.svg" width="18"> Shipping | The Global Supply Chain Pressure Index, which combines shipping rates with supplier delivery times, order backlogs and stock levels across major economies. It is judged against its full history since 1998, because a shorter baseline would be dominated by the 2021–22 crisis and make bad conditions look normal. | New York Fed |
 | <img src="assets/icon-currency.svg" width="18"> Currency | How far the US/Canadian dollar rate moved over the last 30 trading days (about six weeks), and how much it has moved day to day over the last 90, both compared with history since 2017. The dollar figures are simple arithmetic: monthly purchases × USD share × the change in the rate. | Bank of Canada |
-| <img src="assets/icon-suppliers.svg" width="18"> Suppliers | How concentrated your country mix is: square each country's share and add them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and footwear product lines. | Statistics Canada import records, by product and country |
+| <img src="assets/icon-suppliers.svg" width="18"> Suppliers | How much your buying relies on one country, as a reliance score: square each country's share and add them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how much other clothing and footwear imports into Canada rely on one country. | Statistics Canada import records, by product and country |
 
 <p align="center">
   <img src="assets/screenshot-shipping.png" alt="Shipping pressure over the last 10 years, with normal, worse and much worse bands shaded" width="92%">
@@ -141,7 +141,7 @@ cd docs && python3 -m http.server 8000
 
 ⭐ Your inputs are a rough picture of your buying, not your actual orders.
 
-⭐ The dollar figures assume your purchase volume stays the same and that you pay spot rates. If you hedge, or your supplier changes its prices when the rate moves, your real numbers will differ.
+⭐ The dollar figures assume you keep buying the same amount and pay today's exchange rate. If you have locked in a rate with your bank, or your supplier changes its prices when the rate moves, your real numbers will differ.
 
 ⭐ History shows what is unusual. It is not a forecast, and this is not financial advice.
 
