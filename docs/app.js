@@ -946,6 +946,12 @@ async function main() {
   document.querySelectorAll("nav.tabs button").forEach((btn) =>
     btn.addEventListener("click", () => switchTab(btn.dataset.tab))
   );
+  document.querySelectorAll(".corner-icons [data-goto]").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchTab(a.dataset.goto);
+    })
+  );
   // Charts inside a collapsed section have no width until it is opened.
   document.querySelectorAll("details").forEach((d) =>
     d.addEventListener("toggle", () => d.querySelectorAll(".chart").forEach((el) => el.data && Plotly.Plots.resize(el)))

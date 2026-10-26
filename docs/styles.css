@@ -609,3 +609,40 @@ nav.tabs button { box-shadow: 0 1px 2px rgba(107, 29, 46, 0.08); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) #add-country { color: var(--accent); }
 }
+
+/* ===== Signal icons in the masthead corner ===== */
+.masthead .wrap {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 32px;
+}
+.masthead .eyebrow, .masthead h1 { grid-column: 1 / -1; }
+.masthead .sub { grid-column: 1; grid-row: 3; }
+.corner-icons {
+  grid-column: 2; grid-row: 3; align-self: center;
+  display: flex; gap: 14px;
+}
+.corner-icons a { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; }
+.ci {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--pink); border: 2px solid var(--gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+.ci svg {
+  width: 28px; height: 28px; fill: none; stroke: #6b1d2e;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+}
+.ci svg .wave { stroke: #c9a227; }
+.cl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; color: #f6c9d5; }
+.corner-icons a:hover .ci { transform: translateY(-3px) rotate(-6deg); }
+.corner-icons a:nth-child(2) .ci { animation: bob 3.2s ease-in-out infinite 0.4s; }
+.corner-icons a:nth-child(1) .ci { animation: bob 3.2s ease-in-out infinite; }
+.corner-icons a:nth-child(3) .ci { animation: bob 3.2s ease-in-out infinite 0.8s; }
+@keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@media (prefers-reduced-motion: reduce) { .ci { animation: none !important; } }
+@media (max-width: 760px) {
+  .masthead .wrap { display: block; }
+  .corner-icons { margin-bottom: 14px; gap: 10px; }
+  .ci { width: 40px; height: 40px; }
+  .ci svg { width: 22px; height: 22px; }
+}
