@@ -4,19 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canadian Apparel Import Pressure Monitor</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%232a78d6%27/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%236b1d2e%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Open+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="masthead">
     <div class="wrap">
-      <div class="eyebrow">Open-source apparel sourcing risk monitor</div>
+      <div class="eyebrow">For small apparel and footwear importers in Canada</div>
       <h1>Canadian Apparel Import Pressure Monitor</h1>
       <p class="sub">
-        Describe your sourcing mix below. Every number on this page is computed live,
-        in your browser, from the same data files the weekly pipeline publishes.
-        Nothing is sent anywhere; your profile lives only in this page and its URL.
+        Tell us what you buy and where it comes from. See how shipping, the exchange rate and
+        your supplier mix are affecting your costs this month, in dollars where we can, and
+        what is worth considering. Everything is calculated in your browser, and nothing you
+        enter is sent anywhere.
       </p>
     </div>
   </header>
@@ -24,70 +25,79 @@
   <div class="wrap">
     <nav class="tabs">
       <button data-tab="results" class="active">Overview</button>
-      <button data-tab="freight">Freight &amp; Delay</button>
+      <button data-tab="freight">Shipping</button>
       <button data-tab="currency">Currency</button>
-      <button data-tab="origin">Origin Concentration</button>
+      <button data-tab="origin">Suppliers</button>
       <button data-tab="methodology">Methodology</button>
     </nav>
 
-    <div id="loading" class="loading">Loading pipeline data (DuckDB-Wasm, first load only)&hellip;</div>
+    <div id="loading" class="loading">Loading the latest data (first load only)&hellip;</div>
 
     <section class="view active" id="view-results">
       <div class="card">
-        <h2>Your sourcing profile</h2>
-        <div class="desc">Describe what you buy and where it comes from. Everything below recalculates live as you move a slider.</div>
+        <h2>Your business</h2>
+        <div class="desc">Rough numbers are fine. Everything below updates as you change them.</div>
         <div class="profile-top">
           <div class="field">
-            <label for="category-select">Product category</label>
+            <label for="category-select">What you mostly buy</label>
             <select id="category-select"></select>
           </div>
           <div class="field">
-            <label for="slider-usd">Share of purchases invoiced in USD <span class="field-value" id="val-usd"></span></label>
+            <label for="budget-input">Monthly purchases (CAD)</label>
+            <input type="number" id="budget-input" min="0" step="5000" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="slider-usd">Share paid in US dollars <span class="field-value" id="val-usd"></span></label>
             <input type="range" min="0" max="100" step="5" id="slider-usd">
           </div>
-          <div class="field presets">
-            <label>Start from</label>
-            <div class="preset-row">
-              <button type="button" class="btn" data-preset="canada">Canada's actual import mix</button>
-              <button type="button" class="btn" data-preset="concentrated">One-country reliant</button>
-              <button type="button" class="btn" data-preset="diversified">Spread across many</button>
-            </div>
-          </div>
         </div>
-        <div class="field-title">Where it comes from (share of purchases by country of origin)</div>
+        <div class="field-title">Where it comes from (share of your purchases by country)</div>
         <div class="profile-grid" id="country-sliders"></div>
         <div class="share-total" id="share-total"></div>
+        <div class="presets">
+          <span class="presets-label">Not sure? Start from:</span>
+          <div class="preset-row">
+            <button type="button" class="btn" data-preset="canada">What Canada as a whole imports</button>
+            <button type="button" class="btn" data-preset="concentrated">One country does most of it</button>
+            <button type="button" class="btn" data-preset="diversified">Spread across many</button>
+          </div>
+        </div>
       </div>
 
-      <div class="card hero" id="hero"></div>
-
-      <div id="stats" class="stats"></div>
+      <div class="card glance">
+        <h2>This month at a glance</h2>
+        <p class="glance-summary" id="glance-summary"></p>
+        <div class="signals" id="signals"></div>
+      </div>
 
       <div class="card">
-        <h2>Pressure over time for your profile</h2>
-        <div class="desc">The composite is the average of three z-scores: freight pressure, currency movement scaled by your USD share, and how concentrated <em>your</em> country mix is compared with typical sourcing concentration across Canadian apparel product lines. Origin concentration is constant across months because your mix is a single profile, not a time series.</div>
+        <h2>Pressure on your business since 2017</h2>
+        <div class="desc">The three signals combined into one line (an equal-weighted average), so you can see how today compares with past squeezes like 2021&ndash;22. Currency is scaled by your USD share and supplier concentration by your own country mix, so the line moves when you change your profile.</div>
         <div class="chart tall" id="chart-composite"></div>
         <details class="sql-drawer">
-          <summary>SQL &amp; raw result</summary>
+          <summary>See the data and SQL behind this</summary>
           <pre id="sql-composite"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-composite"></table></div>
         </details>
-      </div>
-
-      <div class="card">
-        <h2>Top drivers this month</h2>
-        <div class="desc">Ranked by how far each is from normal (largest |z-score| first). A z-score is the number of standard deviations from that series' own historical average.</div>
-        <div id="driver-cards"></div>
       </div>
     </section>
 
     <section class="view" id="view-freight">
       <div class="card">
-        <h2>Freight &amp; delay pressure</h2>
-        <div class="desc">NY Fed Global Supply Chain Pressure Index, z-scored against its own history since 1998. Already expressed in standard-deviation units by the Fed, so this is close to pass-through.</div>
+        <h2>Where shipping stands</h2>
+        <div id="ship-detail"></div>
+        <details class="sql-drawer">
+          <summary>See the data and SQL behind this</summary>
+          <pre id="sql-ship"></pre>
+          <div class="result-table-wrap"><table class="result-table" id="table-ship"></table></div>
+        </details>
+      </div>
+      <div class="card">
+        <h2>Shipping pressure over time</h2>
+        <div class="desc">The New York Fed's Global Supply Chain Pressure Index blends freight costs (sea and air) with delivery times, order backlogs and stock levels across major economies. Above the dotted lines means tighter than usual: 1 is unusual, 2 is rare. The 2021&ndash;22 spike is the worst on record.</div>
         <div class="chart" id="chart-freight"></div>
         <details class="sql-drawer">
-          <summary>SQL &amp; raw result</summary>
+          <summary>See the data and SQL behind this</summary>
           <pre id="sql-freight"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-freight"></table></div>
         </details>
@@ -96,13 +106,22 @@
 
     <section class="view" id="view-currency">
       <div class="card">
-        <h2>Currency exposure &mdash; USD/CAD</h2>
-        <div class="desc">Two separate signals, each z-scored against its own history since 2017-03-01 (when the Bank of Canada changed its rate methodology): a 30-trading-day level change and a 90-trading-day rolling volatility. Kept apart deliberately &mdash; "the rate moved" and "the rate has been unstable" are different kinds of risk.</div>
+        <h2>What the exchange rate means for your bill</h2>
+        <div id="fx-detail"></div>
+        <details class="sql-drawer">
+          <summary>See the data and SQL behind this</summary>
+          <pre id="sql-fx"></pre>
+          <div class="result-table-wrap"><table class="result-table" id="table-fx"></table></div>
+        </details>
+      </div>
+      <div class="card">
+        <h2>How unusual the recent moves are</h2>
+        <div class="desc">Two separate questions, each compared with its own history since March 2017: <strong>has the rate moved a lot lately</strong> (change over about six weeks) and <strong>has it been jumpy</strong> (day-to-day volatility over about four months). Above the dotted lines is unusual (1) or rare (2).</div>
         <div class="chart" id="chart-currency"></div>
-        <div class="desc" style="margin-top:14px">The underlying exchange rate (Canadian dollars per US dollar). Higher means the Canadian dollar buys fewer US dollars, so USD-invoiced goods cost more.</div>
+        <div class="desc" style="margin-top:14px">The exchange rate itself, in Canadian dollars per US dollar. When it goes up, USD-priced goods cost you more.</div>
         <div class="chart" id="chart-rate"></div>
         <details class="sql-drawer">
-          <summary>SQL &amp; raw result</summary>
+          <summary>See the data and SQL behind this</summary>
           <pre id="sql-currency"></pre>
           <div class="result-table-wrap"><table class="result-table" id="table-currency"></table></div>
         </details>
@@ -111,96 +130,115 @@
 
     <section class="view" id="view-origin">
       <div class="card">
-        <h2>Origin concentration &mdash; <span id="origin-cat-name"></span></h2>
-        <div class="desc">Herfindahl-Hirschman Index (HHI) of Canada's import mix for the category you selected, from full-country CIMT trade data. HHI runs from near 0 (spread across many countries) to 1 (a single country). The dashed line is your own mix, so you can see whether you are more or less concentrated than the country as a whole has been.</div>
-        <div class="chart" id="chart-origin"></div>
+        <h2>How exposed are your suppliers? <span class="h-sub" id="origin-cat-name"></span></h2>
+        <div id="shift-card"></div>
+      </div>
+      <div class="card">
+        <h2>Your mix compared with Canada's</h2>
+        <div class="desc">Where Canada's imports of this product come from (latest 12 months of data) next to your own mix. Countries outside your list are grouped as "Other".</div>
+        <div class="chart" id="chart-mix"></div>
         <details class="sql-drawer">
-          <summary>SQL &amp; raw result</summary>
-          <pre id="sql-origin"></pre>
-          <div class="result-table-wrap"><table class="result-table" id="table-origin"></table></div>
+          <summary>See the data and SQL behind this</summary>
+          <pre id="sql-mix"></pre>
+          <div class="result-table-wrap"><table class="result-table" id="table-mix"></table></div>
         </details>
       </div>
       <div class="card">
-        <h2>Your mix vs. Canada's imports</h2>
-        <div class="desc">Share of Canada's imports of this category by country of origin over the latest 12 months of data, next to your own profile. Countries outside your list are grouped as "Other".</div>
-        <div class="chart" id="chart-mix"></div>
+        <h2>How concentrated Canada's imports are over time</h2>
+        <div class="desc">The concentration score runs from near 0 (spread across many countries) to 1 (one country supplies everything). The dashed line is your mix.</div>
+        <div class="chart" id="chart-origin"></div>
         <details class="sql-drawer">
-          <summary>SQL &amp; raw result</summary>
-          <pre id="sql-mix"></pre>
-          <div class="result-table-wrap"><table class="result-table" id="table-mix"></table></div>
+          <summary>See the data and SQL behind this</summary>
+          <pre id="sql-origin"></pre>
+          <div class="result-table-wrap"><table class="result-table" id="table-origin"></table></div>
         </details>
       </div>
     </section>
 
     <section class="view methodology" id="view-methodology">
       <div class="card">
-        <h2>Methodology &amp; data sources</h2>
-        <div class="desc">How this score is built, where the data comes from, and what it cannot claim.</div>
+        <h2>Methodology</h2>
+        <div class="desc">What the numbers mean, where they come from, and what they can't tell you.</div>
 
-        <h3>What the score can and can't tell you</h3>
-        <p>This tool reports how unusual current freight, currency, and sourcing-concentration
-        conditions look relative to their own history &mdash; it does not forecast your costs
-        and it says nothing about any specific supplier, factory, or brand. Public trade data
-        only goes down to product category and country of origin.</p>
+        <h3>What this is for</h3>
+        <p>Three things you don't control can move your costs: how hard it is to ship goods
+        around the world, the Canadian dollar against the US dollar, and how much of your
+        buying depends on a few countries. This page puts a plain reading on each, translates
+        the currency one into dollars, and suggests what to consider. It does not forecast
+        your costs, and it says nothing about any specific supplier or brand.</p>
 
-        <h3>Scoring</h3>
-        <p>Three components, each a z-score (standard deviations from that series' own
-        historical average). Bands: below 1 = Low (a normal swing), 1&ndash;2 = Elevated (unusual), above 2 = High (rare) &mdash;
-        provisional thresholds, not yet validated against a backtest.</p>
+        <h3>What you enter</h3>
+        <p>The product you mostly buy, your monthly purchases, the share of those purchases
+        paid in US dollars, and roughly what share comes from each country. These are
+        estimates you give, not data we collect, and they stay in your browser and the page
+        address.</p>
+
+        <h3>How "Low", "Elevated" and "High" are decided</h3>
+        <p>Each signal is compared with its own history and expressed as a <strong>z-score</strong>:
+        how far today's value sits from its average, counted in <strong>standard deviations</strong>
+        (the size of a typical swing for that signal). Around 0 is average, up to 1 is a normal
+        swing, 1 to 2 is unusual, 2 to 3 is rare, and 3 or more means something is really off.
+        Below 1 is shown as <strong>Low</strong>, 1 to 2 as <strong>Elevated</strong>, and above 2 as
+        <strong>High</strong>. These cut-offs are my first-pass choice and haven't been tested
+        against real price changes.</p>
+
+        <h3>The three signals</h3>
         <ul>
-          <li><strong>Freight pressure</strong> &mdash; the NY Fed Global Supply Chain Pressure
-          Index, z-scored against its own history since 1998. It is global, so it is the same
-          for every visitor.</li>
-          <li><strong>Currency</strong> &mdash; USD/CAD 30-trading-day level change and 90-day
-          volatility, each z-scored against history since 2017 and averaged. The average is then
-          multiplied by the share of your purchases invoiced in USD, so a CAD- or
-          EUR-invoiced business sees less currency pressure.</li>
-          <li><strong>Origin concentration</strong> &mdash; the HHI of <em>your</em> country mix
-          (sum of squared shares) z-scored against the spread of HHI across all Canadian apparel
-          product lines over the latest 12 months (Canada's own history is too stable month to month
-          to be a useful yardstick). "Other" is treated as spread across many suppliers and contributes
-          nothing to HHI. This is the part of the score that depends most on your profile.</li>
+          <li><strong>Shipping.</strong> The New York Fed's Global Supply Chain Pressure Index, compared
+          with its own history since 1998. We also show how today ranks against every month
+          since then, and whether it has been rising or easing over the last three months. This
+          is global, so it is the same for every business.</li>
+          <li><strong>Currency.</strong> Two measures of the US/Canadian dollar rate, each compared with
+          history since 2017 and averaged for the status: how far the rate has moved over the
+          last 30 trading days (about six weeks), and how jumpy it has been over the last 90
+          (about four months). The dollar figures are simple arithmetic on your inputs:
+          your USD purchases are your monthly purchases times your USD share, and a rate
+          move of X% changes what those purchases cost in Canadian dollars by X%. "A typical
+          swing" is the standard deviation of the six-week move since 2017.</li>
+          <li><strong>Suppliers.</strong> A concentration score for your country mix: square each country's
+          share and add them up (a single country at 100% scores 1, an even spread scores
+          close to 0). It is compared with the same score for Canada's imports across all
+          clothing and footwear product lines over the last 12 months. "Other" is treated as
+          spread across many suppliers, so it adds nothing. The suggested change moves 10
+          points (or a third of your top country's share, if smaller) to the largest Canadian
+          import source you rely on least.</li>
         </ul>
-        <p>The composite is the equal-weighted average of the three. The Currency tab shows the
-        two currency signals separately, and the SQL under every chart is the exact query
-        that produced it.</p>
+        <p>The line on the Overview tab averages the three z-scores equally, with currency
+        multiplied by your USD share.</p>
 
         <h3>Data sources</h3>
         <table>
-          <tr><th>Series</th><th>Source</th><th>Coverage</th></tr>
-          <tr><td>Freight &amp; delay pressure</td><td>NY Fed Global Supply Chain Pressure Index</td><td>Monthly, 1998&ndash;present</td></tr>
-          <tr><td>Currency</td><td>Bank of Canada Valet API (USD/CAD)</td><td>Daily, 2017-03-01&ndash;present (reliable-history floor after a BoC methodology change)</td></tr>
-          <tr><td>Origin concentration &amp; country mix</td><td>StatCan CIMT bulk trade data (HS6 lines rolled up to HS4 headings: knit and woven apparel, footwear, handbags, headwear)</td><td>Monthly, 2023&ndash;present</td></tr>
+          <tr><th>Signal</th><th>Source</th><th>Coverage</th></tr>
+          <tr><td>Shipping</td><td>New York Fed Global Supply Chain Pressure Index</td><td>Monthly, 1998 on</td></tr>
+          <tr><td>Currency</td><td>Bank of Canada Valet API (USD/CAD)</td><td>Daily, from 2017-03-01 (earlier data uses a different method)</td></tr>
+          <tr><td>Suppliers</td><td>Statistics Canada import records (CIMT), 42 clothing, footwear and accessory product lines</td><td>Monthly, 2023 on</td></tr>
         </table>
 
-        <h3>Known limitations</h3>
+        <h3>Limits to keep in mind</h3>
         <ul>
-          <li>The 30-day and 90-day currency windows are counted in trading days (days a
-          rate was published), not calendar days.</li>
-          <li>A small number of CIMT rows (~0.0001% of total import value) with no country
-          recorded are excluded from the concentration calculation.</li>
-          <li>Origin concentration is measured on country of <em>origin</em> as reported in
-          customs data, which can differ from where a garment was cut or sewn.</li>
-          <li>Your profile is a hypothetical mix of spend shares, not actual purchases, so the
-          origin component reflects concentration only, not supplier-level risk.</li>
-          <li>Z-score thresholds (Low/Elevated/High) are provisional, set before a full
-          backtest against Canadian clothing CPI.</li>
+          <li>Dollar figures assume your purchase volume stays the same and that you pay spot
+          rates. If you hedge, or your supplier changes its prices when the rate moves, your
+          real numbers will differ.</li>
+          <li>Country means where customs says the goods were made, which is not always where
+          they were sewn.</li>
+          <li>About 0.0001% of import value has no country recorded and is left out of the
+          concentration figures.</li>
+          <li>Past history is a guide to what is unusual, not a forecast. This is not financial
+          advice.</li>
         </ul>
 
         <h3>How this page works</h3>
-        <p>This is a static page with no backend. It loads
+        <p>There is no server. A weekly job downloads the latest data, recalculates it and
+        publishes small data files next to this page. Your browser loads them with
         <a href="https://duckdb.org/docs/api/wasm/overview" target="_blank" rel="noopener">DuckDB-Wasm</a>
-        and fetches the Parquet files the data pipeline publishes alongside this page,
-        then runs the SQL shown under each chart entirely in your
-        browser. Your profile (category and country shares) is encoded in the page URL, not
-        sent to any server.</p>
+        and runs the SQL you can open under each chart, right on your device.</p>
       </div>
     </section>
 
     <footer class="site">
       <span id="data-through"></span><br>
-      Data pipeline: Python extraction &rarr; dbt on MotherDuck &rarr; Parquet export.
-      Source: <a href="https://github.com/mallika-madhok/supplychain-healthcheck" target="_blank" rel="noopener">github.com/mallika-madhok/supplychain-healthcheck</a>.
+      Source code and pipeline:
+      <a href="https://github.com/mallika-madhok/supplychain-healthcheck" target="_blank" rel="noopener">github.com/mallika-madhok/supplychain-healthcheck</a>.
     </footer>
   </div>
 

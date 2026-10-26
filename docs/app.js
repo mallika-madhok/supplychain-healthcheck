@@ -1,6 +1,6 @@
 // Canadian Apparel Import Pressure Monitor — client-side app.
 // No backend: DuckDB-Wasm runs real SQL in the browser against the pipeline's own
-// published Parquet files. Profile state lives in the URL.
+// published Parquet files. The visitor's profile lives in the URL.
 
 import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm";
 
@@ -32,6 +32,7 @@ const COUNTRIES = [
   { code: "OTHER", label: "Other" },
 ];
 const NAMED_CODES = COUNTRIES.filter((c) => c.code !== "OTHER").map((c) => c.code);
+const COUNTRY_NAME = Object.fromEntries(COUNTRIES.map((c) => [c.code, c.label]));
 
 const PRESETS = {
   typical: { CN: 35, BD: 20, VN: 15, KH: 10, IN: 10, OTHER: 10 },
@@ -41,11 +42,12 @@ const PRESETS = {
 
 const DEFAULT_CATEGORY = "ch61";
 const DEFAULT_USD = 80;
+const DEFAULT_BUDGET = 30000;
 
 let conn = null;
 let categories = [];
-let baseline = null; // composite for the profile the visitor arrived with
 let renderToken = 0;
+let refreshFn = () => {};
 
 // ---------- profile <-> URL ----------
 
@@ -64,6 +66,7 @@ function readProfileFromUrl() {
   return {
     category: params.get("category") || DEFAULT_CATEGORY,
     usd: params.has("usd") ? Number(params.get("usd")) : DEFAULT_USD,
+    budget: params.has("budget") ? Number(params.get("budget")) || 0 : DEFAULT_BUDGET,
     shares,
   };
 }
@@ -72,6 +75,7 @@ function writeStateToUrl(profile, tab) {
   const params = new URLSearchParams();
   params.set("category", profile.category);
   params.set("usd", String(profile.usd));
+  params.set("budget", String(profile.budget));
   COUNTRIES.forEach((c) => {
     if (profile.shares[c.code]) params.set("s_" + c.code, String(profile.shares[c.code]));
   });
@@ -98,6 +102,15 @@ function fmtSigned(n, digits = 2) {
   return (n >= 0 ? "+" : "−") + Math.abs(n).toFixed(digits);
 }
 
+function money(n) {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return (n < 0 ? "−" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-CA");
+}
+
+function pctText(frac, digits = 1) {
+  return (Math.abs(frac) * 100).toFixed(digits) + "%";
+}
+
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
@@ -108,15 +121,19 @@ function sqlStr(s) {
 
 function cleanRow(r) {
   const out = {};
-  for (const [k, v] of Object.entries(r)) {
-    out[k] = typeof v === "bigint" ? Number(v) : v;
-  }
+  for (const [k, v] of Object.entries(r)) out[k] = typeof v === "bigint" ? Number(v) : v;
   return out;
 }
 
 async function runQuery(sql) {
   const result = await conn.query(sql);
   return result.toArray().map((r) => cleanRow(r.toJSON()));
+}
+
+function formatCell(v) {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "number") return Number.isInteger(v) ? v : v.toFixed(4);
+  return String(v);
 }
 
 function show(sqlId, tableId, sql, rows, limit = 12) {
@@ -133,15 +150,10 @@ function show(sqlId, tableId, sql, rows, limit = 12) {
     tail.map((row) => "<tr>" + cols.map((c) => `<td>${formatCell(row[c])}</td>`).join("") + "</tr>").join("");
 }
 
-function formatCell(v) {
-  if (v === null || v === undefined) return "—";
-  if (typeof v === "number") return Number.isInteger(v) ? v : v.toFixed(4);
-  return String(v);
-}
-
 // ---------- charts ----------
 
 const plotConfig = { responsive: true, displayModeBar: false };
+const FONT = "Segoe UI, Open Sans, system-ui, sans-serif";
 
 function baseLayout(extra) {
   const grid = cssVar("--border");
@@ -150,7 +162,7 @@ function baseLayout(extra) {
       margin: { l: 48, r: 16, t: 10, b: 34 },
       paper_bgcolor: "transparent",
       plot_bgcolor: "transparent",
-      font: { family: "IBM Plex Sans, sans-serif", color: cssVar("--text-secondary"), size: 12 },
+      font: { family: FONT, color: cssVar("--text-secondary"), size: 12 },
       xaxis: { gridcolor: grid, zeroline: false, showline: false },
       yaxis: { gridcolor: grid, zeroline: true, zerolinecolor: grid },
       legend: { orientation: "h", y: 1.15, x: 0, font: { size: 11 } },
@@ -164,7 +176,7 @@ function zAxis(title) {
   return { gridcolor: cssVar("--border"), zeroline: true, zerolinecolor: cssVar("--text-muted"), title };
 }
 
-// Horizontal reference lines at the Elevated / High thresholds.
+// Horizontal reference lines at the Elevated (1) and High (2) thresholds.
 function zBandShapes() {
   const c = cssVar("--text-muted");
   return [1, 2].map((y) => ({
@@ -188,7 +200,7 @@ function plot(id, traces, layout) {
 function sparkline(id, x, y, color) {
   plot(
     id,
-    [{ x, y, type: "scatter", mode: "lines", line: { color, width: 1.6 }, hoverinfo: "skip" }],
+    [{ x, y, type: "scatter", mode: "lines", line: { color, width: 1.8 }, hoverinfo: "skip" }],
     {
       margin: { l: 0, r: 0, t: 2, b: 2 },
       paper_bgcolor: "transparent", plot_bgcolor: "transparent",
@@ -229,18 +241,45 @@ function totalShare(profile) {
 
 // HHI of the visitor's named countries. "Other" is treated as spread across many
 // suppliers, so it adds nothing to concentration.
-function userHhi(profile) {
-  const total = totalShare(profile);
+function hhiOf(shares) {
+  const total = COUNTRIES.reduce((sum, c) => sum + (shares[c.code] || 0), 0);
   if (!total) return null;
   return NAMED_CODES.reduce((sum, code) => {
-    const f = profile.shares[code] / total;
+    const f = (shares[code] || 0) / total;
     return sum + f * f;
   }, 0);
+}
+
+function userHhi(profile) {
+  return hhiOf(profile.shares);
 }
 
 function categoryLabel(code) {
   const c = categories.find((x) => x.category_code === code);
   return c ? c.category_label : code;
+}
+
+// Pick the move that most simply cuts concentration: shift some share from the biggest
+// supplier to the largest Canadian import source the visitor leans on least.
+function suggestShift(profile, canadaPct) {
+  const total = totalShare(profile);
+  if (!total) return null;
+  const pct = {};
+  COUNTRIES.forEach((c) => (pct[c.code] = (100 * profile.shares[c.code]) / total));
+  const top = NAMED_CODES.slice().sort((a, b) => pct[b] - pct[a])[0];
+  if (pct[top] < 30) return null;
+  const to = NAMED_CODES
+    .filter((c) => c !== top && (canadaPct[c] || 0) >= 3 && pct[c] < pct[top] - 10)
+    .sort((a, b) => (canadaPct[b] || 0) - (canadaPct[a] || 0))[0];
+  if (!to) return null;
+  const move = Math.max(1, Math.min(10, Math.round(pct[top] / 3)));
+  const next = {};
+  COUNTRIES.forEach((c) => (next[c.code] = Math.round(pct[c.code])));
+  next[top] -= move;
+  next[to] += move;
+  const drift = 100 - COUNTRIES.reduce((s, c) => s + next[c.code], 0);
+  next[top] += drift;
+  return { from: top, to, move, shares: next, before: hhiOf(profile.shares), after: hhiOf(next), topShare: pct[top] };
 }
 
 // ---------- queries ----------
@@ -254,9 +293,48 @@ from read_parquet('mart_currency_exposure.parquet')
 where level_change_zscore is not null and volatility_zscore is not null
 order by date`;
 
+function shipSql() {
+  return `-- Where shipping pressure stands today, and how it ranks against every month since 1998
+with ranked as (
+  select month, gscpi_value, gscpi_zscore,
+         percent_rank() over (order by gscpi_zscore) as pct,
+         lag(gscpi_zscore, 3) over (order by month) as z_3_months_ago
+  from read_parquet('mart_freight_pressure.parquet')
+)
+select strftime(month, '%Y-%m') as month, gscpi_value, gscpi_zscore,
+       round(100 * pct) as percentile, z_3_months_ago
+from ranked
+order by month desc
+limit 1`;
+}
+
+function fxImpactSql(spend) {
+  return `-- What the exchange rate means for your USD purchases (spend = monthly purchases x USD share)
+with fx as (
+  select date, usd_cad_rate, level_change_30d
+  from read_parquet('mart_currency_exposure.parquet')
+),
+latest as (select max(date) as d from fx),
+now_rate as (select usd_cad_rate as r from fx, latest where date = d),
+year_ago as (
+  select usd_cad_rate as r from fx, latest
+  where date <= d - interval 1 year order by date desc limit 1
+),
+swing as (select stddev_samp(level_change_30d) as s from fx)
+select strftime((select d from latest), '%Y-%m-%d') as as_of,
+       now_rate.r as rate_now,
+       year_ago.r as rate_year_ago,
+       now_rate.r / year_ago.r - 1 as change_vs_year_ago,
+       swing.s as typical_six_week_swing,
+       ${Math.round(spend)} as monthly_usd_purchases_cad,
+       ${Math.round(spend)} * (now_rate.r / year_ago.r - 1) as extra_cost_vs_year_ago,
+       ${Math.round(spend)} * swing.s as cost_of_a_typical_swing
+from now_rate, year_ago, swing`;
+}
+
 function originSql(profile) {
   return `select strftime(month, '%Y-%m-%d') as month, category_label, country_count,
-       hhi, hhi_zscore, hhi
+       hhi, hhi_zscore
 from read_parquet('mart_origin_concentration.parquet')
 where category_code = ${sqlStr(profile.category)}
 order by month`;
@@ -264,7 +342,7 @@ order by month`;
 
 function compositeSql(profile, hhi) {
   const usd = (profile.usd / 100).toFixed(2);
-  return `-- Your profile: ${categoryLabel(profile.category)}, ${profile.usd}% USD-invoiced, mix HHI ${fmt(hhi, 3)}
+  return `-- Your profile: ${categoryLabel(profile.category)}, ${profile.usd}% USD-invoiced, mix concentration ${fmt(hhi, 3)}
 with freight as (
   select date_trunc('month', month) as m, gscpi_zscore as freight_z
   from read_parquet('mart_freight_pressure.parquet')
@@ -282,7 +360,7 @@ benchmark as (  -- how concentrated Canadian apparel import sourcing is across p
   where category_level = 'heading'
     and month > (select max(month) from read_parquet('mart_origin_concentration.parquet')) - interval 12 month
 ),
-origin as (  -- your mix's HHI vs. that benchmark
+origin as (  -- your mix's concentration vs. that benchmark
   select (${fmt(hhi, 6)} - hhi_mean) / hhi_stdev as origin_z from benchmark
 )
 select strftime(f.m, '%Y-%m') as month,
@@ -318,36 +396,122 @@ from totals
 order by canada_share_pct desc`;
 }
 
+// ---------- plain-language readings ----------
+
+function shippingReading(ship) {
+  const z = ship.gscpi_zscore;
+  const pct = ship.percentile;
+  const delta = ship.z_3_months_ago === null ? 0 : z - ship.z_3_months_ago;
+  const trend = delta > 0.3 ? "rising" : delta < -0.3 ? "easing" : "holding steady";
+  const state =
+    z > 2 ? "under heavy strain" : z > 1 ? "tighter than normal" : z > -0.5 ? "close to normal" : "looser than normal";
+  const rank = pct >= 50
+    ? `Tighter than ${pct}% of months since 1998`
+    : `Easier than ${100 - pct}% of months since 1998`;
+  let consider;
+  if (z > 1 && delta > 0.3) {
+    consider = "Order earlier than usual and ask suppliers to confirm ship dates. Expect transit and delivery times to run longer.";
+  } else if (z > 1) {
+    consider = trend === "easing"
+      ? "Conditions are easing but still strained. Keep a few extra weeks of buffer on time-sensitive orders."
+      : "Conditions remain strained. Keep a few extra weeks of buffer on time-sensitive orders.";
+  } else if (delta > 0.3) {
+    consider = "Shipping is normal now but getting tighter. Worth watching before you place large orders.";
+  } else {
+    consider = "Nothing here calls for pulling orders forward.";
+  }
+  return { z, state, rank, trend, consider, pct, delta };
+}
+
+function currencyReading(fx, currencyZ, profile) {
+  const spend = (profile.budget * profile.usd) / 100;
+  const change = fx.change_vs_year_ago;
+  const dir = change >= 0 ? "more" : "less";
+  const swingCost = fx.cost_of_a_typical_swing;
+  if (profile.usd === 0) {
+    return {
+      z: 0, exposed: false, spend,
+      headline: "You are not exposed to US dollar swings",
+      detail: "You said none of your purchases are paid in US dollars. If that changes, update the slider above.",
+      consider: "If your suppliers quote in US dollars indirectly (through an agent, for example), set the share higher to see the effect.",
+    };
+  }
+  const z = currencyZ;
+  const dollars = profile.budget > 0;
+  const flat = Math.abs(change) < 0.005;
+  const headline = flat
+    ? "Your US dollar purchases cost about the same as a year ago"
+    : `Your US dollar purchases cost ${pctText(change)} ${dir} than a year ago`;
+  const detail = dollars
+    ? (flat ? `The exchange rate is within half a percent of where it was a year ago, on ${money(spend)} of USD purchases. `
+            : `That is about ${money(Math.abs(fx.extra_cost_vs_year_ago))} a month ${dir} on ${money(spend)} of USD purchases. `) +
+      `In a typical six-week stretch the rate moves ${pctText(fx.typical_six_week_swing)}, or about ${money(swingCost)} a month for you.`
+    : `In a typical six-week stretch the rate moves ${pctText(fx.typical_six_week_swing)}. Enter your monthly purchases to see this in dollars.`;
+  const consider =
+    z > 1
+      ? "The rate has been moving or swinging more than usual. If you have large US dollar invoices coming up, ask your bank about locking in a rate."
+      : `The rate is behaving normally. When you budget, leave a cushion of about ${pctText(fx.typical_six_week_swing, 0)} for currency swings.`;
+  return { z, exposed: true, spend, headline, detail, consider };
+}
+
+function supplierReading(profile, hhi, marketHhi, originZ, shift) {
+  const total = totalShare(profile);
+  if (!total) {
+    return { z: null, headline: "Add your countries to see this", detail: "Set the sliders for where your purchases come from.", consider: "" };
+  }
+  const named = NAMED_CODES.slice().sort((a, b) => profile.shares[b] - profile.shares[a])[0];
+  const share = Math.round((100 * profile.shares[named]) / total);
+  const headline = `${COUNTRY_NAME[named]} supplies ${share}% of your buying`;
+  const detail =
+    `Your concentration score is ${fmt(hhi, 2)}. ` +
+    (marketHhi !== null ? `Canada's imports of this product score ${fmt(marketHhi, 2)}. ` : "") +
+    "Lower means spread across more countries.";
+  let consider;
+  if (shift) {
+    consider =
+      `Moving ${shift.move} points from ${COUNTRY_NAME[shift.from]} to ${COUNTRY_NAME[shift.to]} would lower your score from ${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}. ` +
+      "That way one disruption (a tariff change, a port strike, a factory shutdown) reaches less of your stock.";
+  } else if (originZ !== null && originZ > 1) {
+    consider = "Your mix is more concentrated than usual. Adding a second or third supplier country would reduce the risk of a single disruption.";
+  } else {
+    consider = "Your mix is already well spread. No change needed.";
+  }
+  return { z: originZ, headline, detail, consider };
+}
+
 // ---------- rendering ----------
 
-function statTile(label, value, z, note) {
+function signalCard({ key, title, z, headline, detail, consider, tab }) {
   const c = classifyZ(z);
-  const tag = z === undefined ? "" : `<span class="stat-tag" style="background:${c.color}">${c.label}</span>`;
-  const tile = document.createElement("div");
-  tile.className = "stat";
-  tile.innerHTML =
-    `<div class="stat-label">${label}</div>` +
-    `<div class="stat-value">${value}${tag}</div>` +
-    (note ? `<div class="stat-note">${note}</div>` : "");
-  return tile;
+  const el = document.createElement("div");
+  el.className = "signal";
+  el.innerHTML =
+    `<div class="signal-head"><span class="signal-title">${title}</span>` +
+    `<span class="stat-tag" style="background:${c.color}">${c.label}</span></div>` +
+    `<div class="signal-headline">${headline}</div>` +
+    `<div class="signal-detail">${detail}</div>` +
+    `<div class="signal-spark" id="spark-${key}"></div>` +
+    (consider ? `<div class="consider"><span class="consider-label">Worth considering</span>${consider}</div>` : "") +
+    `<a href="#" data-goto="${tab}">More on ${title.toLowerCase()} &rarr;</a>`;
+  return el;
 }
 
 function renderStaticCharts(freightRows, currencyRows) {
   const months = freightRows.map((r) => r.month);
   plot(
     "chart-freight",
-    [line(months, freightRows.map((r) => r.gscpi_zscore), "GSCPI z-score", cssVar("--series-1"))],
-    baseLayout({ showlegend: false, yaxis: zAxis("z-score"), shapes: zBandShapes() })
+    [line(months, freightRows.map((r) => r.gscpi_zscore), "Shipping pressure", cssVar("--series-1"))],
+    baseLayout({ showlegend: false, yaxis: zAxis("tighter than usual →"), shapes: zBandShapes() })
   );
 
   const dates = currencyRows.map((r) => r.date);
   plot(
     "chart-currency",
     [
-      line(dates, currencyRows.map((r) => r.level_change_zscore), "30d level change (z)", cssVar("--series-1")),
-      line(dates, currencyRows.map((r) => r.volatility_zscore), "90d volatility (z)", cssVar("--series-2")),
+      line(dates, currencyRows.map((r) => r.level_change_zscore), "Moved a lot lately", cssVar("--series-1")),
+      line(dates, currencyRows.map((r) => r.volatility_zscore), "Been jumpy", cssVar("--series-2")),
     ],
-    baseLayout({ yaxis: zAxis("z-score"), shapes: zBandShapes() })
+    baseLayout({ yaxis: zAxis("more unusual →"), shapes: zBandShapes() })
   );
   plot(
     "chart-rate",
@@ -356,17 +520,84 @@ function renderStaticCharts(freightRows, currencyRows) {
   );
 }
 
-async function renderOrigin(profile, hhi) {
+function kvTable(pairs) {
+  return `<table class="kv">${pairs.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</table>`;
+}
+
+function renderShipDetail(ship, r) {
+  const c = classifyZ(r.z);
+  document.getElementById("ship-detail").innerHTML =
+    `<p class="lead">Global shipping is <strong>${r.state}</strong>. <span class="stat-tag" style="background:${c.color}">${c.label}</span></p>` +
+    kvTable([
+      ["Latest reading", `${ship.month}`],
+      ["How far from normal", `${fmtSigned(r.z)} (1 is unusual, 2 is rare)`],
+      ["How it ranks", r.rank],
+      ["Last 3 months", r.trend.charAt(0).toUpperCase() + r.trend.slice(1)],
+    ]) +
+    `<div class="consider"><span class="consider-label">Worth considering</span>${r.consider}</div>`;
+}
+
+function renderFxDetail(fx, r, profile) {
+  const c = classifyZ(r.z);
+  const dollars = profile.budget > 0 && profile.usd > 0;
+  document.getElementById("fx-detail").innerHTML =
+    `<p class="lead">${r.headline}. ${r.exposed ? `<span class="stat-tag" style="background:${c.color}">${c.label}</span>` : ""}</p>` +
+    (r.exposed
+      ? kvTable([
+          ["Exchange rate today", `${fmt(fx.rate_now, 3)} Canadian dollars per US dollar`],
+          ["A year ago", `${fmt(fx.rate_year_ago, 3)}`],
+          ["Change", `${fx.change_vs_year_ago >= 0 ? "+" : "−"}${pctText(fx.change_vs_year_ago)}`],
+          ["Your USD purchases", dollars ? `${money(r.spend)} a month` : "Enter monthly purchases on the Overview tab"],
+          ["Extra cost vs. a year ago", dollars ? `${money(fx.extra_cost_vs_year_ago)} a month` : "—"],
+          ["A typical six-week swing", dollars ? `${pctText(fx.typical_six_week_swing)}, about ${money(fx.cost_of_a_typical_swing)} a month` : pctText(fx.typical_six_week_swing)],
+        ]) +
+        `<div class="consider"><span class="consider-label">Worth considering</span>${r.consider}</div>`
+      : `<p class="desc">${r.detail}</p>`);
+}
+
+function renderShiftCard(profile, shift, hhi, marketHhi, originZ) {
+  const el = document.getElementById("shift-card");
+  const c = classifyZ(originZ);
+  if (!totalShare(profile)) {
+    el.innerHTML = `<p class="desc">Set where your purchases come from on the Overview tab.</p>`;
+    return;
+  }
+  let html =
+    `<p class="lead">Your concentration score is <strong>${fmt(hhi, 2)}</strong> against <strong>${fmt(marketHhi, 2)}</strong> for Canada's imports of this product. ` +
+    `<span class="stat-tag" style="background:${c.color}">${c.label}</span></p>` +
+    `<p class="desc">The score runs from near 0 (spread across many countries) to 1 (one country supplies everything). ` +
+    `The status compares your score with how concentrated sourcing typically is across Canadian apparel product lines.</p>`;
+  if (shift) {
+    html +=
+      `<div class="consider"><span class="consider-label">Worth considering</span>` +
+      `Moving ${shift.move} points of your buying from <strong>${COUNTRY_NAME[shift.from]}</strong> (${Math.round(shift.topShare)}% today) ` +
+      `to <strong>${COUNTRY_NAME[shift.to]}</strong>, one of the largest sources of Canadian imports of this product, would lower your score from ` +
+      `${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}.` +
+      `<div><button type="button" class="btn" id="apply-shift">Try that change</button></div></div>`;
+  } else {
+    html += `<div class="consider"><span class="consider-label">Worth considering</span>` +
+      (originZ !== null && originZ > 1
+        ? "Your mix is more concentrated than usual. Adding a second or third supplier country would cut the risk of a single disruption."
+        : "Your mix is already well spread. No change needed.") + `</div>`;
+  }
+  el.innerHTML = html;
+  const btn = document.getElementById("apply-shift");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      profile.shares = shift.shares;
+      syncControls(profile);
+      refreshFn();
+    });
+  }
+}
+
+function renderOriginCharts(profile, hhi, originRows, mix) {
   document.getElementById("origin-cat-name").textContent = categoryLabel(profile.category);
+  show("sql-origin", "table-origin", originSql(profile), originRows);
 
-  const sql = originSql(profile);
-  const rows = await runQuery(sql);
-  show("sql-origin", "table-origin", sql, rows);
-
-  const x = rows.map((r) => r.month);
-  const traces = [line(x, rows.map((r) => r.hhi), "Canada's import mix", cssVar("--series-3"), {
-    mode: "lines+markers", marker: { size: 4 },
-    hovertemplate: "%{y:.3f}<extra>Canada</extra>",
+  const x = originRows.map((r) => r.month);
+  const traces = [line(x, originRows.map((r) => r.hhi), "Canada's imports", cssVar("--series-3"), {
+    mode: "lines+markers", marker: { size: 4 }, hovertemplate: "%{y:.3f}<extra>Canada</extra>",
   })];
   if (hhi !== null && x.length) {
     traces.push({
@@ -375,11 +606,9 @@ async function renderOrigin(profile, hhi) {
       hovertemplate: "%{y:.3f}<extra>Your mix</extra>",
     });
   }
-  plot("chart-origin", traces, baseLayout({ yaxis: { gridcolor: cssVar("--border"), title: "HHI" } }));
+  plot("chart-origin", traces, baseLayout({ yaxis: { gridcolor: cssVar("--border"), title: "Concentration score" } }));
 
-  const mixQuery = mixSql(profile);
-  const mix = await runQuery(mixQuery);
-  show("sql-mix", "table-mix", mixQuery, mix, 20);
+  show("sql-mix", "table-mix", mixSql(profile), mix, 20);
   const canada = Object.fromEntries(mix.map((r) => [r.country, r.canada_share_pct]));
   const total = totalShare(profile) || 1;
   const labels = COUNTRIES.map((c) => c.label);
@@ -393,117 +622,93 @@ async function renderOrigin(profile, hhi) {
     ],
     baseLayout({ barmode: "group", yaxis: { gridcolor: cssVar("--border"), title: "% of total" }, margin: { l: 48, r: 16, t: 10, b: 70 } })
   );
-  return rows;
-}
-
-function summaryText(profile, comp, drivers, hhi, marketHhi) {
-  const band = classifyZ(comp).label.toLowerCase();
-  const top = drivers[0];
-  const dir = top.z > 0 ? "above" : "below";
-  const parts = [
-    `Overall pressure on your ${categoryLabel(profile.category).toLowerCase()} sourcing is <strong>${band}</strong> (${fmtSigned(comp)}σ).`,
-    `The biggest driver is <strong>${top.label.toLowerCase()}</strong>, at ${fmt(Math.abs(top.z))} standard deviations ${dir} its historical norm.`,
-  ];
-  if (hhi !== null && marketHhi !== null) {
-    const rel = hhi > marketHhi ? "more" : "less";
-    parts.push(
-      `Your country mix is ${rel} concentrated than Canada's overall imports of this category (HHI ${fmt(hhi, 2)} vs ${fmt(marketHhi, 2)}).`
-    );
-  }
-  return parts.join(" ");
 }
 
 async function renderResults(profile) {
   const token = ++renderToken;
   const hhi = userHhi(profile);
-  const sql = compositeSql(profile, hhi ?? 0);
-  const [rows, originRows] = await Promise.all([runQuery(sql), runQuery(originSql(profile))]);
+  const spend = (profile.budget * profile.usd) / 100;
+  const compSql = compositeSql(profile, hhi ?? 0);
+  const [rows, shipRows, fxRows, originRows, mix] = await Promise.all([
+    runQuery(compSql),
+    runQuery(shipSql()),
+    runQuery(fxImpactSql(spend)),
+    runQuery(originSql(profile)),
+    runQuery(mixSql(profile)),
+  ]);
   if (token !== renderToken) return; // a newer slider move superseded this render
 
-  show("sql-composite", "table-composite", sql, rows);
+  show("sql-composite", "table-composite", compSql, rows);
+  show("sql-ship", "table-ship", shipSql(), shipRows);
+  show("sql-fx", "table-fx", fxImpactSql(spend), fxRows);
 
   const last = rows[rows.length - 1];
-  const prev = rows[rows.length - 2];
+  const ship = shipRows[0];
+  const fx = fxRows[0];
   const lastOrigin = originRows[originRows.length - 1];
   const marketHhi = lastOrigin ? lastOrigin.hhi : null;
-
-  if (baseline === null) baseline = last.composite_z;
-  const vsStart = last.composite_z - baseline;
-
-  // Hero
-  const band = classifyZ(last.composite_z);
-  const hero = document.getElementById("hero");
   const originZ = last.origin_z;
-  const drivers = [
-    { key: "freight", label: "Freight & delay", z: last.freight_z, tab: "freight", color: "--series-1",
-      desc: "NY Fed Global Supply Chain Pressure Index vs. its own history.", series: rows.map((r) => r.freight_z) },
-    { key: "currency", label: "Currency exposure", z: last.currency_exposed_z, tab: "currency", color: "--series-2",
-      desc: `USD/CAD 30-day change and 90-day volatility, scaled to your ${profile.usd}% USD exposure.`,
-      series: rows.map((r) => r.currency_exposed_z) },
-    { key: "origin", label: "Origin concentration", z: originZ, tab: "origin", color: "--series-3",
-      desc: "How concentrated your country mix is vs. typical sourcing concentration across Canadian apparel product lines.",
-      series: originRows.map((r) => r.hhi_zscore), seriesX: originRows.map((r) => r.month) },
-  ].sort((a, b) => Math.abs(b.z ?? 0) - Math.abs(a.z ?? 0));
+  const canadaPct = Object.fromEntries(mix.map((r) => [r.country, r.canada_share_pct]));
+  const shift = suggestShift(profile, canadaPct);
 
-  hero.innerHTML =
-    `<div class="hero-main">` +
-    `<div><div class="stat-label">Composite pressure — ${last.month}</div>` +
-    `<div class="hero-score" style="color:${band.color}">${fmtSigned(last.composite_z)}<span class="hero-unit">σ</span>` +
-    `<span class="stat-tag" style="background:${band.color}">${band.label}</span></div>` +
-    `<div class="hero-deltas">` +
-    (prev ? `<span>${fmtSigned(last.composite_z - prev.composite_z)} vs. last month</span>` : "") +
-    `<span>${fmtSigned(vsStart)} vs. the profile you started with</span></div></div>` +
-    `<p class="hero-summary">${summaryText(profile, last.composite_z, drivers, hhi, marketHhi)}</p>` +
-    `</div>`;
+  const shipR = shippingReading(ship);
+  const fxR = currencyReading(fx, last.currency_z, profile);
+  const supR = supplierReading(profile, hhi, marketHhi, originZ, shift);
 
-  // Tiles
-  const statsEl = document.getElementById("stats");
-  statsEl.innerHTML = "";
-  statsEl.appendChild(statTile("Freight & delay", fmtSigned(last.freight_z) + "σ", last.freight_z, "Global, same for everyone"));
-  statsEl.appendChild(statTile("Currency (scaled to USD share)", fmtSigned(last.currency_exposed_z) + "σ", last.currency_exposed_z, `${fmtSigned(last.currency_z)}σ before scaling`));
-  statsEl.appendChild(statTile("Origin concentration", originZ === null ? "—" : fmtSigned(originZ) + "σ", originZ, "Your mix vs. typical product line"));
-  statsEl.appendChild(
-    statTile(`Your mix HHI vs. Canada (${categoryLabel(profile.category)})`, `${fmt(hhi, 2)} / ${fmt(marketHhi, 2)}`, undefined, "Lower = more diversified")
-  );
+  // Overall sentence
+  const ranked = [
+    { label: "shipping", z: shipR.z },
+    { label: "the exchange rate", z: fxR.exposed ? fxR.z : -9 },
+    { label: "your supplier mix", z: supR.z ?? -9 },
+  ].sort((a, b) => b.z - a.z);
+  const top = ranked[0];
+  const topBand = classifyZ(top.z).label;
+  document.getElementById("glance-summary").textContent =
+    topBand === "Low"
+      ? `All three signals are in a normal range for ${ship.month}. Nothing needs action right now, and the cards below show where each one stands.`
+      : `For ${ship.month}, the biggest pressure on your business is ${top.label} (${topBand.toLowerCase()}). Here is where each of the three stands.`;
 
-  // Composite history chart
-  const x = rows.map((r) => r.month);
-  plot(
-    "chart-composite",
-    [
-      line(x, rows.map((r) => r.composite_z), "Composite", cssVar("--text-primary"), { line: { color: cssVar("--text-primary"), width: 2.4 } }),
-      line(x, rows.map((r) => r.freight_z), "Freight", cssVar("--series-1"), { line: { color: cssVar("--series-1"), width: 1.6 }, opacity: 0.9 }),
-      line(x, rows.map((r) => r.currency_exposed_z), "Currency (scaled)", cssVar("--series-2"), { line: { color: cssVar("--series-2"), width: 1.6 }, opacity: 0.9 }),
-    ],
-    baseLayout({ yaxis: zAxis("z-score"), shapes: zBandShapes() })
-  );
-
-  // Driver cards
-  const driverEl = document.getElementById("driver-cards");
-  driverEl.innerHTML = "";
-  drivers.forEach((d, i) => {
-    const c = classifyZ(d.z);
-    const row = document.createElement("div");
-    row.className = "driver";
-    row.innerHTML =
-      `<div class="driver-rank">${i + 1}</div>` +
-      `<div class="driver-text"><strong>${d.label}</strong><div class="driver-desc">${d.desc}</div>` +
-      `<a href="#" data-goto="${d.tab}">See ${d.label.toLowerCase()} detail &rarr;</a></div>` +
-      `<div class="driver-spark" id="spark-${d.key}"></div>` +
-      `<div class="stat-value driver-value">${fmtSigned(d.z)}σ<span class="stat-tag" style="background:${c.color}">${c.label}</span></div>`;
-    driverEl.appendChild(row);
-    const ys = d.series.slice(-60);
-    const xs = (d.seriesX || x).slice(-60);
-    sparkline(`spark-${d.key}`, xs, ys, cssVar(d.color));
-  });
-  driverEl.querySelectorAll("a[data-goto]").forEach((a) =>
+  // Cards
+  const signals = document.getElementById("signals");
+  signals.innerHTML = "";
+  const cards = [
+    { key: "freight", title: "Shipping", tab: "freight", z: shipR.z,
+      headline: `Global shipping is ${shipR.state}`,
+      detail: `${shipR.rank}, and ${shipR.trend} over the last three months.`, consider: shipR.consider },
+    { key: "currency", title: "Currency", tab: "currency", z: fxR.exposed ? fxR.z : 0,
+      headline: fxR.headline, detail: fxR.detail, consider: fxR.consider },
+    { key: "origin", title: "Suppliers", tab: "origin", z: supR.z,
+      headline: supR.headline, detail: supR.detail, consider: supR.consider },
+  ];
+  cards.forEach((c) => signals.appendChild(signalCard(c)));
+  signals.querySelectorAll("a[data-goto]").forEach((a) =>
     a.addEventListener("click", (e) => {
       e.preventDefault();
       switchTab(a.dataset.goto);
     })
   );
+  const x = rows.map((r) => r.month);
+  sparkline("spark-freight", x.slice(-60), rows.map((r) => r.freight_z).slice(-60), cssVar("--series-1"));
+  sparkline("spark-currency", x.slice(-60), rows.map((r) => r.currency_z).slice(-60), cssVar("--series-2"));
+  sparkline("spark-origin", originRows.map((r) => r.month), originRows.map((r) => r.hhi), cssVar("--series-3"));
 
-  await renderOrigin(profile, hhi);
+  // Detail tabs
+  renderShipDetail(ship, shipR);
+  renderFxDetail(fx, fxR, profile);
+  renderShiftCard(profile, shift, hhi, marketHhi, originZ);
+
+  // Combined line
+  plot(
+    "chart-composite",
+    [
+      line(x, rows.map((r) => r.composite_z), "Combined", cssVar("--maroon-line"), { line: { color: cssVar("--maroon-line"), width: 2.6 } }),
+      line(x, rows.map((r) => r.freight_z), "Shipping", cssVar("--series-1"), { line: { color: cssVar("--series-1"), width: 1.4 }, opacity: 0.55 }),
+      line(x, rows.map((r) => r.currency_exposed_z), "Currency (scaled to your USD share)", cssVar("--series-2"), { line: { color: cssVar("--series-2"), width: 1.4 }, opacity: 0.7 }),
+    ],
+    baseLayout({ yaxis: zAxis("more pressure →"), shapes: zBandShapes() })
+  );
+
+  renderOriginCharts(profile, hhi, originRows, mix);
 }
 
 // ---------- profile controls ----------
@@ -542,6 +747,8 @@ function syncControls(profile) {
   document.getElementById("slider-usd").value = profile.usd;
   document.getElementById("val-usd").textContent = profile.usd + "%";
   document.getElementById("category-select").value = profile.category;
+  const budget = document.getElementById("budget-input");
+  if (document.activeElement !== budget) budget.value = profile.budget;
   updateShareTotal(profile);
 }
 
@@ -592,10 +799,7 @@ function switchTab(tab) {
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll("section.view").forEach((v) => v.classList.toggle("active", v.id === "view-" + tab));
   // Charts drawn while their tab was hidden have no width; resize once visible.
-  document.querySelectorAll(`#view-${tab} .chart`).forEach((el) => {
-    if (el.data) Plotly.Plots.resize(el);
-  });
-  document.querySelectorAll(`#view-${tab} .driver-spark`).forEach((el) => {
+  document.querySelectorAll(`#view-${tab} .chart, #view-${tab} .signal-spark`).forEach((el) => {
     if (el.data) Plotly.Plots.resize(el);
   });
   writeStateToUrl(window.__profile, tab);
@@ -609,7 +813,7 @@ async function main() {
   try {
     conn = await initDuckDB();
   } catch (err) {
-    loading.textContent = "Could not load DuckDB-Wasm or fetch the pipeline data: " + err.message;
+    loading.textContent = "Could not load the data engine or the data files: " + err.message;
     return;
   }
   loading.style.display = "none";
@@ -622,43 +826,44 @@ async function main() {
   if (!categories.some((c) => c.category_code === profile.category)) profile.category = DEFAULT_CATEGORY;
   window.__profile = profile;
 
-  const refresh = () => {
+  refreshFn = () => {
     writeStateToUrl(profile, currentTab);
     return renderResults(profile);
   };
 
-  buildCountrySliders(profile, refresh);
+  buildCountrySliders(profile, refreshFn);
   syncControls(profile);
 
   document.getElementById("slider-usd").addEventListener("input", (e) => {
     profile.usd = Number(e.target.value);
     syncControls(profile);
-    refresh();
+    refreshFn();
+  });
+  document.getElementById("budget-input").addEventListener("input", (e) => {
+    profile.budget = Math.max(0, Number(e.target.value) || 0);
+    refreshFn();
   });
   document.getElementById("category-select").addEventListener("change", (e) => {
     profile.category = e.target.value;
-    refresh();
+    refreshFn();
   });
   document.querySelectorAll("[data-preset]").forEach((btn) =>
     btn.addEventListener("click", async () => {
       profile.shares =
         btn.dataset.preset === "canada" ? await canadaMix(profile.category) : sharesFrom(PRESETS[btn.dataset.preset]);
       syncControls(profile);
-      refresh();
+      refreshFn();
     })
   );
 
   // Static (profile-independent) series
   const [freightRows, currencyRows] = await Promise.all([runQuery(FREIGHT_SQL), runQuery(CURRENCY_SQL)]);
-  document.getElementById("sql-freight").textContent = FREIGHT_SQL;
-  document.getElementById("sql-currency").textContent = CURRENCY_SQL;
   show("sql-freight", "table-freight", FREIGHT_SQL, freightRows);
   show("sql-currency", "table-currency", CURRENCY_SQL, currencyRows);
   renderStaticCharts(freightRows, currencyRows);
 
-  const through = freightRows[freightRows.length - 1].month.slice(0, 7);
   document.getElementById("data-through").textContent =
-    `Freight data through ${through}; FX through ${currencyRows[currencyRows.length - 1].date}.`;
+    `Shipping data through ${freightRows[freightRows.length - 1].month.slice(0, 7)}; exchange rates through ${currencyRows[currencyRows.length - 1].date}.`;
 
   document.querySelectorAll("nav.tabs button").forEach((btn) =>
     btn.addEventListener("click", () => switchTab(btn.dataset.tab))
