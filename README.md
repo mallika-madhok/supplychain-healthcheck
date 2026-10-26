@@ -28,9 +28,9 @@ It doesn't tell you what to do. It can't know your contracts, margins or supplie
 
 ## The three signals
 
-<img src="assets/icon-shipping.svg" width="28" align="left"> &nbsp;**Shipping pressure:** how delayed and expensive it is to move goods around the world, compared with normal.
+<img src="assets/icon-shipping.svg" width="28" align="left"> &nbsp;**Shipping pressure:** whether shipping rates, supplier delivery times and order backlogs around the world are running higher than normal.
 
-<img src="assets/icon-currency.svg" width="28" align="left"> &nbsp;**Currency:** how much the price of a US dollar, in Canadian dollars, has been swinging. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price hasn't changed.
+<img src="assets/icon-currency.svg" width="28" align="left"> &nbsp;**Currency:** how far the US dollar has moved against the Canadian dollar, and how unpredictable it has been. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price hasn't changed.
 
 <img src="assets/icon-suppliers.svg" width="28" align="left"> &nbsp;**Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder a single tariff change, port strike or factory shutdown hits you.
 
