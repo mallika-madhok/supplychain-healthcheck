@@ -4,12 +4,15 @@
 
 ## What this is
 
-For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they do not control: dependence on a concentrated supplier mix (most of your stock from a handful of countries), shipping delays, and tariffs. Larger players have analysts tracking these signals. A smaller importer usually finds out when a shipment is late or an invoice comes in higher than expected.
+For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they do not control. Larger players have analysts tracking the forces behind them. A smaller importer usually finds out when a shipment is late or an invoice comes in higher than expected.
 
-This tool gives them an early signal. It turns free public data into a single monthly score
-for their own mix of products, countries and currency, so they can see when conditions are
-getting harder and decide whether to order earlier, spread suppliers or hedge currency
-before the cost shows up.
+This app gives you an early read on three signals, using free public data, based on your own mix of products, countries and currency:
+
+1. **Shipping pressure:** how strained global shipping is right now.
+2. **Currency:** how much the Canadian dollar has been moving against the US dollar.
+3. **Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder one disruption hits you, whether that is a tariff change, a port strike or a factory shutdown.
+
+You get one headline score, **Low**, **Elevated** or **High**, plus a breakdown of which signal is driving it.
 
 ## How to use it
 
@@ -17,22 +20,22 @@ before the cost shows up.
 2. Say how much of your buying is paid in US dollars.
 3. Say roughly where your goods come from, by country.
 
-You get one headline score, **Low**, **Elevated** or **High**, plus a breakdown of what is
-pushing it up or down. Move any slider and everything updates straight away.
+Move any slider and everything updates straight away.
 
-## What goes into the score
+## How the score is calculated
 
-| Question | Where the answer comes from |
-|---|---|
-| Is global shipping under strain right now? | New York Fed supply chain index |
-| Is the Canadian dollar moving a lot against the US dollar? | Bank of Canada exchange rates |
-| Do you rely too heavily on one country? | Statistics Canada import records, by product and country |
+Each signal is compared with its own history. The result is a **z-score**: how many "typical swings" today's value sits above or below its usual level. A z-score of 0 means normal, 1 means unusually high, and 2 or more means rare. Because every signal ends up on the same scale, the three can be averaged into one score.
 
-Each one is compared with its own history, so "High" means "unusually high compared with
-what is normal". The three results are averaged into the headline score.
+| Signal | What is measured | Where the data comes from |
+|---|---|---|
+| Shipping pressure | The Global Supply Chain Pressure Index, compared with its history since 1998 | New York Fed |
+| Currency | How far the USD/CAD exchange rate moved over the last 30 trading days, and how unstable it has been over the last 90. Both are compared with history since 2017 and averaged, then scaled by your USD share, so a business that pays mostly in other currencies feels less of it | Bank of Canada |
+| Supplier concentration | How concentrated your country mix is, measured by squaring each country's share and adding them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and shoe product lines over the last 12 months | Statistics Canada import records, by product and country |
+
+The three results are averaged. Below 0 is **Low**, 0 to 1 is **Elevated**, and above 1 is **High**.
 
 The score does not predict your costs, and it says nothing about any particular supplier.
-It is a way to see when conditions are getting tougher.
+It shows when conditions are getting tougher.
 
 ## Seeing how it works
 
