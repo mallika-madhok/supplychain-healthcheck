@@ -6,15 +6,15 @@
 
 Three things you don't control decide what your next order really costs and when it arrives: global shipping, the exchange rate, and how much you rely on one supplier country. Most small importers only find out after the fact, when the shipment is already late or the invoice is already higher, and by then it is too late to do anything about it.
 
-This app checks all three for your business and tells you what to do while you still have time to act:
+This app checks all three for your business every month and flags anything unusual early, so you know where to look before it shows up in a late delivery or a bigger invoice:
 
-| When the app shows | What you can do |
+| When the app flags | What it points you to |
 |---|---|
-| Shipping is worse than usual | Order earlier and add a few weeks to the delivery dates you plan around, especially for seasonal launches |
-| The exchange rate is moving against you | Budget the extra cost (shown in dollars for your purchases), lock in a rate with your bank before a big US dollar invoice, or check your retail prices still cover it |
-| Too much of your buying comes from one country | Start getting quotes from a second country before a tariff change or port strike forces you to |
+| Shipping is worse than usual | Your orders due to ship in the next few months, especially anything tied to a launch or sale date |
+| The exchange rate is moving against you | What your upcoming US dollar invoices will cost at today's rate (the app shows the dollar amount for your purchases), and whether your prices still cover it |
+| Too much of your buying comes from one country | How you would cope if supply from that country were disrupted, plus which other countries Canada already buys that product from |
 
-If all three are normal, that is useful too: keep ordering and budgeting as usual.
+It doesn't tell you what to do. It can't know your contracts, margins or suppliers, and you do. What it does is tell you, early and in plain terms, when something is worth a closer look. When all three are normal, that is useful too: nothing needs your attention.
 
 ## What it looks at
 
@@ -22,7 +22,7 @@ If all three are normal, that is useful too: keep ordering and budgeting as usua
 2. **Currency:** how much the price of a US dollar, in Canadian dollars, has been swinging. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price has not changed.
 3. **Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder one disruption hits you.
 
-Each one gets a status (Normal, Worse than usual or Much worse than usual), a scale showing where today sits, and a "What you can do" note with a specific next step.
+Each one gets a status (Normal, Worse than usual or Much worse than usual), a scale showing where today sits, and a short "Worth checking" note pointing to what to look into.
 
 ## How do I use it?
 

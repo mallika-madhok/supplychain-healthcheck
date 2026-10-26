@@ -6,7 +6,7 @@
   <title>Canadian Apparel Import Pressure Monitor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%236b1d2e%27/%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Open+Sans:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="styles.css?v=202610251944">
+  <link rel="stylesheet" href="styles.css?v=202610251946">
 </head>
 <body>
   <header class="masthead">
@@ -31,7 +31,7 @@
         Shipping delays, the exchange rate and leaning on one supplier country can all raise
         what your next order costs. Most small importers only find out after the fact. Enter
         your business below and see where each one stands today, what it means in dollars, and
-        what you can do about it while there is still time.
+        what is worth checking while there is still time.
       </p>
     </div>
   </header>
@@ -85,9 +85,9 @@
         <h2>Where you stand this month</h2>
         <p class="glance-summary" id="glance-summary"></p>
         <div class="legend">
-          <span style="--dot:var(--status-good)"><strong>Normal:</strong> nothing to change</span>
-          <span style="--dot:var(--status-warning)"><strong>Worse than usual:</strong> plan for it</span>
-          <span style="--dot:var(--status-critical)"><strong>Much worse than usual:</strong> act now</span>
+          <span style="--dot:var(--status-good)"><strong>Normal:</strong> nothing stands out</span>
+          <span style="--dot:var(--status-warning)"><strong>Worse than usual:</strong> worth checking</span>
+          <span style="--dot:var(--status-critical)"><strong>Much worse than usual:</strong> look into it now</span>
         </div>
         <div class="signals" id="signals"></div>
         <details class="sql-drawer">
@@ -177,7 +177,7 @@
         <p>Three things you don't control can move your costs: how hard it is to ship goods
         around the world, the Canadian dollar against the US dollar, and how much of your
         buying depends on a few countries. This page puts a plain reading on each, translates
-        the currency one into dollars, and turns each reading into a concrete next step. It does not forecast
+        the currency one into dollars, and points to what in your business is worth checking. It does not tell you what to do: it doesn't know your contracts, margins or suppliers, and you do. It does not forecast
         your costs, and it says nothing about any specific supplier or brand.</p>
 
         <h3>What you enter</h3>
@@ -213,9 +213,7 @@
           share and add them up (a single country at 100% scores 1, an even spread scores
           close to 0). It is compared with the same score for Canada's imports across all
           clothing and footwear product lines over the last 12 months. "Other" is treated as
-          spread across many suppliers, so it adds nothing. The suggested change moves 10
-          points (or a third of your top country's share, if smaller) to the largest Canadian
-          import source you rely on least.</li>
+          spread across many suppliers, so it adds nothing.</li>
         </ul>
         
 
@@ -256,6 +254,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
-  <script type="module" src="app.js?v=202610251944"></script>
+  <script type="module" src="app.js?v=202610251946"></script>
 </body>
 </html>

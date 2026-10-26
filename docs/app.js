@@ -259,29 +259,6 @@ function categoryLabel(code) {
   return c ? c.category_label : code;
 }
 
-// Pick the move that most simply cuts concentration: shift some share from the biggest
-// supplier to the largest Canadian import source the visitor leans on least.
-function suggestShift(profile, canadaPct) {
-  const total = totalShare(profile);
-  if (!total) return null;
-  const pct = {};
-  COUNTRIES.forEach((c) => (pct[c.code] = (100 * profile.shares[c.code]) / total));
-  const top = NAMED_CODES.slice().sort((a, b) => pct[b] - pct[a])[0];
-  if (pct[top] < 30) return null;
-  const to = NAMED_CODES
-    .filter((c) => c !== top && (canadaPct[c] || 0) >= 3 && pct[c] < pct[top] - 10)
-    .sort((a, b) => (canadaPct[b] || 0) - (canadaPct[a] || 0))[0];
-  if (!to) return null;
-  const move = Math.max(1, Math.min(10, Math.round(pct[top] / 3)));
-  const next = {};
-  COUNTRIES.forEach((c) => (next[c.code] = Math.round(pct[c.code])));
-  next[top] -= move;
-  next[to] += move;
-  const drift = 100 - COUNTRIES.reduce((s, c) => s + next[c.code], 0);
-  next[top] += drift;
-  return { from: top, to, move, shares: next, before: hhiOf(profile.shares), after: hhiOf(next), topShare: pct[top] };
-}
-
 // ---------- queries ----------
 
 const FREIGHT_SQL = `-- Last 10 years. The z-score itself is measured against the full record since 1998.
@@ -412,18 +389,18 @@ function shippingReading(ship) {
     ? `Tighter than ${pct}% of months in the last 10 years`
     : `Easier than ${100 - pct}% of months in the last 10 years`;
   let consider;
-  if (z > 1 && delta > 0.3) {
-    consider = "Place orders for your next season earlier than usual and add a few weeks to the delivery dates you plan around. Ask suppliers to confirm ship dates now.";
-  } else if (z > 1 && trend === "easing") {
-    consider = "Shipping is easing but still strained. Keep a few extra weeks of buffer on time-sensitive orders, like seasonal launches, but there is no need to rush everything forward.";
-  } else if (z > 1) {
-    consider = "Keep a few extra weeks of buffer on time-sensitive orders, like seasonal launches, and ask suppliers to confirm ship dates.";
+  let label = "All clear";
+  if (z > 1) {
+    label = "Worth checking";
+    consider = (delta > 0.3 ? "Pressure is still rising. " : "") +
+      "Orders due to ship in the next few months, especially anything tied to a launch or sale date.";
   } else if (delta > 0.3) {
-    consider = "Shipping is normal but tightening. If a big order is coming up, placing it sooner rather than later is a cheap safeguard.";
+    label = "Keep an eye on";
+    consider = "Normal for now, but getting tighter. Worth another look next month.";
   } else {
-    consider = "Order on your usual schedule. Nothing here calls for pulling orders forward.";
+    consider = "Nothing unusual. No need to look into this right now.";
   }
-  return { z, state, rank, trend, consider, pct, delta };
+  return { z, state, rank, trend, consider, label, pct, delta };
 }
 
 function currencyReading(fx, currencyZ, profile) {
@@ -433,10 +410,10 @@ function currencyReading(fx, currencyZ, profile) {
   const swingCost = fx.cost_of_a_typical_swing;
   if (profile.usd === 0) {
     return {
-      z: 0, exposed: false, spend,
+      z: 0, exposed: false, spend, label: "Note",
       headline: "You are not exposed to US dollar swings",
       detail: "You said none of your purchases are paid in US dollars. If that changes, update the slider above.",
-      consider: "If your suppliers quote in US dollars indirectly (through an agent, for example), set the share higher to see the effect.",
+      consider: "If your suppliers price in US dollars indirectly (through an agent, for example), set the share higher to see the effect.",
     };
   }
   const z = currencyZ;
@@ -450,42 +427,49 @@ function currencyReading(fx, currencyZ, profile) {
             : `That is about ${money(Math.abs(fx.extra_cost_vs_year_ago))} a month ${dir} on ${money(spend)} of USD purchases. `) +
       `In a typical six-week stretch the rate moves ${pctText(fx.typical_six_week_swing)}, or about ${money(swingCost)} a month for you.`
     : `In a typical six-week stretch the rate moves ${pctText(fx.typical_six_week_swing)}. Enter your monthly purchases to see this in dollars.`;
-  const cushion = dollars
-    ? `about ${pctText(fx.typical_six_week_swing, 0)} (${money(swingCost)} a month)`
-    : `about ${pctText(fx.typical_six_week_swing, 0)}`;
   let consider =
     z > 1
-      ? `Before your next big US dollar invoice, ask your bank about locking in a rate (a forward contract), and budget a cushion of ${cushion} in case it keeps moving.`
-      : `Budget a cushion of ${cushion} for normal currency swings.`;
+      ? "The rate has been moving more than usual. Check any large US dollar invoices due soon, and what they would cost at today's rate."
+      : "Nothing unusual about the exchange rate right now.";
+  const label = z > 1 || change >= 0.03 ? "Worth checking" : "All clear";
   if (change >= 0.03) {
-    consider = `Your US dollar costs are up ${pctText(change)} on last year, so check that your retail prices still cover it. ` + consider;
+    consider = `Your US dollar costs are up ${pctText(change)} on last year. Check whether your prices and margins still reflect that. ` +
+      (z > 1 ? "The rate has also been moving more than usual." : "");
   }
-  return { z, exposed: true, spend, headline, detail, consider };
+  return { z, exposed: true, spend, headline, detail, consider, label };
 }
 
-function supplierReading(profile, hhi, marketHhi, originZ, shift) {
+// Canada's biggest named sources for this product, excluding the visitor's top country.
+function otherSources(canadaPct, exclude) {
+  return NAMED_CODES
+    .filter((c) => c !== exclude && (canadaPct[c] || 0) >= 3)
+    .sort((a, b) => canadaPct[b] - canadaPct[a])
+    .slice(0, 3)
+    .map((c) => `${COUNTRY_NAME[c]} (${Math.round(canadaPct[c])}%)`);
+}
+
+function supplierReading(profile, hhi, marketHhi, originZ, canadaPct) {
   const total = totalShare(profile);
   if (!total) {
-    return { z: null, headline: "Add your countries to see this", detail: "Set the sliders for where your purchases come from.", consider: "" };
+    return { z: null, headline: "Add your countries to see this", detail: "Set the sliders for where your purchases come from.", consider: "", label: "" };
   }
-  const named = NAMED_CODES.slice().sort((a, b) => profile.shares[b] - profile.shares[a])[0];
-  const share = Math.round((100 * profile.shares[named]) / total);
-  const headline = `${COUNTRY_NAME[named]} supplies ${share}% of your buying`;
+  const top = NAMED_CODES.slice().sort((a, b) => profile.shares[b] - profile.shares[a])[0];
+  const share = Math.round((100 * profile.shares[top]) / total);
+  const headline = `${COUNTRY_NAME[top]} supplies ${share}% of your buying`;
   const detail =
     `Your concentration score is ${fmt(hhi, 2)}. ` +
     (marketHhi !== null ? `Canada's imports of this product score ${fmt(marketHhi, 2)}. ` : "") +
     "Lower means spread across more countries.";
   let consider;
-  if (shift && originZ !== null && originZ > 1) {
-    consider =
-      `Start getting quotes from suppliers in ${COUNTRY_NAME[shift.to]}. Moving ${shift.move} points of your buying there from ${COUNTRY_NAME[shift.from]} ` +
-      `would lower your score from ${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}, so one tariff change, port strike or factory shutdown reaches less of your stock.`;
-  } else if (originZ !== null && originZ > 1) {
-    consider = "Start sampling a second supplier country, so a single tariff change or port strike can't hit most of your stock at once.";
+  const label = originZ !== null && originZ > 1 ? "Worth checking" : "All clear";
+  if (originZ !== null && originZ > 1) {
+    const others = otherSources(canadaPct, top);
+    consider = `How you would cope if supply from ${COUNTRY_NAME[top]} were disrupted, by a tariff change or a port strike for example.` +
+      (others.length ? ` For reference, Canada's other large sources for this product are ${others.join(", ")}.` : "");
   } else {
-    consider = "Your mix is already well spread. Keep it that way when you add new suppliers.";
+    consider = "Your mix is spread out. Nothing to look into right now.";
   }
-  return { z: originZ, headline, detail, consider };
+  return { z: originZ, headline, detail, consider, label, top };
 }
 
 // ---------- rendering ----------
@@ -507,7 +491,7 @@ function miniIcon(tab) {
   return svg ? `<span class="mini-ic ic-${tab}">${svg.outerHTML}</span>` : "";
 }
 
-function signalCard({ title, z, headline, detail, consider, tab }) {
+function signalCard({ title, z, headline, detail, consider, label, tab }) {
   const c = classifyZ(z);
   const el = document.createElement("div");
   el.className = "signal";
@@ -516,7 +500,7 @@ function signalCard({ title, z, headline, detail, consider, tab }) {
     `<span class="stat-tag" style="background:${c.color}">${c.label}</span></div>` +
     `<div class="signal-headline">${headline}</div>` +
     gauge(z) +
-    (consider ? `<div class="consider"><span class="consider-label">What you can do</span>${consider}</div>` : "") +
+    (consider ? `<div class="consider${label === "All clear" ? " clear" : ""}"><span class="consider-label">${label}</span>${consider}</div>` : "") +
     `<div class="signal-detail">${detail}</div>` +
     `<a href="#" data-goto="${tab}">More on ${title.toLowerCase()} &rarr;</a>`;
   return el;
@@ -602,7 +586,7 @@ function renderShipDetail(ship, r) {
       ["How it ranks", r.rank],
       ["Last 3 months", r.trend.charAt(0).toUpperCase() + r.trend.slice(1)],
     ]) +
-    `<div class="consider"><span class="consider-label">What you can do</span>${r.consider}</div>`;
+    `<div class="consider${r.label === "All clear" ? " clear" : ""}"><span class="consider-label">${r.label}</span>${r.consider}</div>`;
 }
 
 function renderFxDetail(fx, r, profile) {
@@ -619,47 +603,26 @@ function renderFxDetail(fx, r, profile) {
           ["Extra cost vs. a year ago", dollars ? `${money(fx.extra_cost_vs_year_ago)} a month` : "—"],
           ["A typical six-week swing", dollars ? `${pctText(fx.typical_six_week_swing)}, about ${money(fx.cost_of_a_typical_swing)} a month` : pctText(fx.typical_six_week_swing)],
         ]) +
-        `<div class="consider"><span class="consider-label">What you can do</span>${r.consider}</div>`
+        `<div class="consider${r.label === "All clear" ? " clear" : ""}"><span class="consider-label">${r.label}</span>${r.consider}</div>`
       : `<p class="desc">${r.detail}</p>`);
 }
 
-function renderShiftCard(profile, shift, hhi, marketHhi, originZ) {
+function renderShiftCard(profile, r, hhi, marketHhi, originZ) {
   const el = document.getElementById("shift-card");
   const c = classifyZ(originZ);
   if (!totalShare(profile)) {
     el.innerHTML = `<p class="desc">Set where your purchases come from on the Overview tab.</p>`;
     return;
   }
-  let html =
-    `<p class="lead">Your concentration score is <strong>${fmt(hhi, 2)}</strong> against <strong>${fmt(marketHhi, 2)}</strong> for Canada's imports of this product. ` +
-    `<span class="stat-tag" style="background:${c.color}">${c.label}</span></p>` +
-    `<p class="desc">The score runs from near 0 (spread across many countries) to 1 (one country supplies everything). ` +
-    `The status compares your score with how concentrated sourcing typically is across Canadian apparel product lines.</p>`;
-  if (shift) {
-    const needed = originZ !== null && originZ > 1;
-    html +=
-      `<div class="consider"><span class="consider-label">${needed ? "What you can do" : "Optional"}</span>` +
-      (needed ? "" : "Your mix is fine as it is. If you want to spread it further: ") +
-      `Moving ${shift.move} points of your buying from <strong>${COUNTRY_NAME[shift.from]}</strong> (${Math.round(shift.topShare)}% today) ` +
-      `to <strong>${COUNTRY_NAME[shift.to]}</strong>, one of the largest sources of Canadian imports of this product, would lower your score from ` +
-      `${fmt(shift.before, 2)} to ${fmt(shift.after, 2)}.` +
-      `<div><button type="button" class="btn" id="apply-shift">Try that change</button></div></div>`;
-  } else {
-    html += `<div class="consider"><span class="consider-label">What you can do</span>` +
-      (originZ !== null && originZ > 1
-        ? "Your mix is more concentrated than usual. Adding a second or third supplier country would cut the risk of a single disruption."
-        : "Your mix is already well spread. No change needed.") + `</div>`;
-  }
-  el.innerHTML = html;
-  const btn = document.getElementById("apply-shift");
-  if (btn) {
-    btn.addEventListener("click", () => {
-      profile.shares = shift.shares;
-      resetVisible(profile);
-      syncControls(profile);
-      refreshFn();
-    });
-  }
+  el.innerHTML =
+    `<p class="lead">${r.headline}. <span class="stat-tag" style="background:${c.color}">${c.label}</span></p>` +
+    kvTable([
+      ["Your concentration score", fmt(hhi, 2)],
+      ["Canada's imports of this product", fmt(marketHhi, 2)],
+      ["What the score means", "Near 0 is spread across many countries, 1 is a single country"],
+    ]) +
+    `<p class="desc">The status compares your score with how concentrated sourcing typically is across Canadian clothing and footwear product lines.</p>` +
+    (r.consider ? `<div class="consider${r.label === "All clear" ? " clear" : ""}"><span class="consider-label">${r.label}</span>${r.consider}</div>` : "");
 }
 
 function renderOriginCharts(profile, hhi, originRows, mix) {
@@ -720,11 +683,10 @@ async function renderResults(profile) {
   const marketHhi = lastOrigin ? lastOrigin.hhi : null;
   const originZ = last.origin_z;
   const canadaPct = Object.fromEntries(mix.map((r) => [r.country, r.canada_share_pct]));
-  const shift = suggestShift(profile, canadaPct);
 
   const shipR = shippingReading(ship);
   const fxR = currencyReading(fx, last.currency_z, profile);
-  const supR = supplierReading(profile, hhi, marketHhi, originZ, shift);
+  const supR = supplierReading(profile, hhi, marketHhi, originZ, canadaPct);
 
   // Overall sentence
   const ranked = [
@@ -737,8 +699,8 @@ async function renderResults(profile) {
   const when = monthName(ship.month);
   document.getElementById("glance-summary").textContent =
     topBand.label === "Normal"
-      ? `All three are normal for ${when}. Keep ordering and budgeting as usual.`
-      : `For ${when}, the one to deal with first is ${top.label} (${topBand.phrase}). Start with the steps on that card.`;
+      ? `All three are normal for ${when}. Nothing stands out to look into.`
+      : `For ${when}, the one to look into first is ${top.label} (${topBand.phrase}).`;
 
   // Cards
   const signals = document.getElementById("signals");
@@ -746,11 +708,11 @@ async function renderResults(profile) {
   const cards = [
     { key: "freight", title: "Shipping", tab: "freight", z: shipR.z,
       headline: `Global shipping is ${shipR.state}`,
-      detail: `${shipR.rank}, and ${shipR.trend} over the last three months.`, consider: shipR.consider },
+      detail: `${shipR.rank}, and ${shipR.trend} over the last three months.`, consider: shipR.consider, label: shipR.label },
     { key: "currency", title: "Currency", tab: "currency", z: fxR.exposed ? fxR.z : 0,
-      headline: fxR.headline, detail: fxR.detail, consider: fxR.consider },
+      headline: fxR.headline, detail: fxR.detail, consider: fxR.consider, label: fxR.label },
     { key: "origin", title: "Suppliers", tab: "origin", z: supR.z,
-      headline: supR.headline, detail: supR.detail, consider: supR.consider },
+      headline: supR.headline, detail: supR.detail, consider: supR.consider, label: supR.label },
   ];
   cards.forEach((c) => signals.appendChild(signalCard(c)));
   signals.querySelectorAll("a[data-goto]").forEach((a) =>
@@ -763,7 +725,7 @@ async function renderResults(profile) {
   // Detail tabs
   renderShipDetail(ship, shipR);
   renderFxDetail(fx, fxR, profile);
-  renderShiftCard(profile, shift, hhi, marketHhi, originZ);
+  renderShiftCard(profile, supR, hhi, marketHhi, originZ);
 
   renderOriginCharts(profile, hhi, originRows, mix);
 }

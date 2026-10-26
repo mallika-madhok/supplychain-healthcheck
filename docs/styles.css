@@ -859,3 +859,6 @@ nav.tabs button .mini-ic svg { width: 13px; height: 13px; }
   :root:not([data-theme="light"]) .mini-ic svg { stroke: #f7e6ff; }
   :root:not([data-theme="light"]) .mini-ic { border-color: rgba(255, 255, 255, 0.3); }
 }
+
+.consider.clear { border-left-color: var(--status-good); }
+.consider.clear .consider-label { color: var(--status-good); }
