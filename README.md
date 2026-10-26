@@ -28,7 +28,8 @@ Each signal is compared with its own history, and the result is a **z-score**: h
 
 - **Around 0:** right at the average.
 - **Up to 1:** within a normal swing.
-- **2:** unusual. It happens, but not often.
+- **1 to 2:** unusual. It happens, but not often.
+- **2 to 3:** rare.
 - **3 or more:** something is really off.
 
 Because every signal ends up on this one scale, the three can be averaged into a single score.
@@ -39,7 +40,7 @@ Because every signal ends up on this one scale, the three can be averaged into a
 | Currency | How far the USD/CAD exchange rate moved over the last 30 trading days, and how unstable it has been over the last 90. Both are compared with history since 2017 and averaged, then scaled by your USD share, so a business that pays mostly in other currencies feels less of it | Bank of Canada |
 | Supplier concentration | How concentrated your country mix is, measured by squaring each country's share and adding them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and shoe product lines over the last 12 months | Statistics Canada import records, by product and country |
 
-The three results are averaged. Below 0 is **Low**, 0 to 1 is **Elevated**, and above 1 is **High**.
+The three results are averaged. Below 1 is **Low**, 1 to 2 is **Elevated**, and above 2 is **High**.
 
 The score does not predict your costs, and it says nothing about any particular supplier.
 It shows when conditions are getting tougher.

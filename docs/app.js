@@ -83,8 +83,8 @@ function writeStateToUrl(profile, tab) {
 
 function classifyZ(z) {
   if (z === null || z === undefined || isNaN(z)) return { label: "n/a", color: "var(--text-muted)" };
-  if (z > 1) return { label: "High", color: "var(--status-critical)" };
-  if (z > 0) return { label: "Elevated", color: "var(--status-warning)" };
+  if (z > 2) return { label: "High", color: "var(--status-critical)" };
+  if (z > 1) return { label: "Elevated", color: "var(--status-warning)" };
   return { label: "Low", color: "var(--status-good)" };
 }
 
@@ -167,7 +167,7 @@ function zAxis(title) {
 // Horizontal reference lines at the Elevated / High thresholds.
 function zBandShapes() {
   const c = cssVar("--text-muted");
-  return [0, 1].map((y) => ({
+  return [1, 2].map((y) => ({
     type: "line", xref: "paper", x0: 0, x1: 1, y0: y, y1: y,
     line: { color: c, width: 1, dash: "dot" },
   }));
