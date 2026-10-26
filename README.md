@@ -8,33 +8,41 @@
   <img src="https://img.shields.io/badge/Cost-free_to_use-1f9e7a?style=for-the-badge" alt="Free to use">
 </p>
 
-## Why should you care?
+## So, what is this?
 
-If you import clothing or shoes into Canada, three things you don't control decide what your next order really costs and when it arrives: global shipping, the exchange rate, and how much you rely on one supplier country. Most small importers only find out after the fact, when the shipment is already late or the invoice is already higher, and by then it is too late to do anything about it.
+For small businesses importing clothing and shoes into Canada, the costs that matter most are the ones they don't control. Larger retailers have analysts watching them. A small importer usually finds out after the fact, when a shipment is already late or an invoice is already higher, and by then it is too late to prepare.
 
-This app gives you a monthly **pressure reading** on all three, based on your own business, so you get a heads-up while there is still time to prepare:
+This app gives you a heads-up. You enter a few details about your business, and it gives you a monthly **pressure reading** on three signals:
 
-| When the app flags | What it points you to |
-|---|---|
-| Shipping is worse than usual | Your orders due to ship in the next few months, especially anything tied to a launch or sale date |
-| The exchange rate is moving against you | What your upcoming US dollar invoices will cost at today's rate (in dollars, for your purchases), and whether your prices still cover it |
-| Too much of your buying comes from one country | How you would cope if supply from that country were disrupted, plus which other countries Canada already buys that product from |
+<img src="assets/icon-shipping.svg" width="22"> &nbsp;**Shipping:** whether shipping rates, supplier delivery times and order backlogs around the world are running higher than normal.
 
-It doesn't tell you what to do. It can't know your contracts, margins or suppliers, and you do. What it does is tell you, early and in plain terms, when something is worth a closer look. When all three are normal, that is useful too: nothing needs your attention.
+<img src="assets/icon-currency.svg" width="22"> &nbsp;**Currency:** how far the US dollar has moved against the Canadian dollar, and how unpredictable it has been. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price hasn't changed.
+
+<img src="assets/icon-suppliers.svg" width="22"> &nbsp;**Suppliers:** how much of your stock depends on a handful of countries. The more it does, the harder a single tariff change, port strike or factory shutdown hits you.
+
+Each signal gets a status and a short note on what is worth checking in your own business, so you can look into it early and be better prepared.
 
 <p align="center">
-  <img src="assets/screenshot-overview.png" alt="The app's monthly reading: shipping, currency and suppliers, each with a status and a note on what is worth checking" width="92%">
+  <img src="https://img.shields.io/badge/Normal-nothing_stands_out-2e9e5b?style=flat-square" alt="Normal: nothing stands out">
+  <img src="https://img.shields.io/badge/Worse_than_usual-worth_checking-e0a21b?style=flat-square" alt="Worse than usual: worth checking">
+  <img src="https://img.shields.io/badge/Much_worse_than_usual-look_into_it_now-cf2a45?style=flat-square" alt="Much worse than usual: look into it now">
 </p>
 
-## The three signals
+### How it works, in short
 
-<img src="assets/icon-shipping.svg" width="28" align="left"> &nbsp;**Shipping pressure:** whether shipping rates, supplier delivery times and order backlogs around the world are running higher than normal.
+⭐ Each signal comes from free public data: the New York Fed, the Bank of Canada and Statistics Canada. It refreshes every week.
 
-<img src="assets/icon-currency.svg" width="28" align="left"> &nbsp;**Currency:** how far the US dollar has moved against the Canadian dollar, and how unpredictable it has been. Most clothing is invoiced in US dollars, so when the Canadian dollar weakens your bill goes up even if your supplier's price hasn't changed.
+⭐ Today's value is compared with that signal's own history and turned into a **z-score**: how far today sits from its average, measured in standard deviations.
 
-<img src="assets/icon-suppliers.svg" width="28" align="left"> &nbsp;**Supplier concentration:** how much of your stock depends on a handful of countries. The more it does, the harder a single tariff change, port strike or factory shutdown hits you.
+⭐ The z-score sets the status: below 1 is **Normal**, 1 to 2 is **Worse than usual**, above 2 is **Much worse than usual**.
 
-Each one gets a status (**Normal**, **Worse than usual** or **Much worse than usual**), a scale showing where today sits, and a short note on what is worth checking.
+⭐ The currency reading is also turned into dollars for your purchases, so you can see what a move in the exchange rate means for your bill.
+
+<p align="center">
+  <img src="assets/screenshot-overview.png" alt="The monthly pressure reading: shipping, currency and suppliers, each with a status and a note on what is worth checking" width="92%">
+</p>
+
+<p align="center"><img src="assets/divider.svg" width="100%"></p>
 
 ## How do I use it?
 
@@ -44,13 +52,27 @@ Each one gets a status (**Normal**, **Worse than usual** or **Much worse than us
 
 Everything updates as you go. Not sure where to start? There are starting points for "what Canada as a whole imports", "one country does most of it" and "spread across many". Each chart also has quick time windows (like 6M, 1Y or 5Y) suited to how often that data updates, plus a date range if you want something specific.
 
-## How the pressure reading works
+## What the reading points you to
 
-Each signal is compared with its own history, and the result is a **z-score**: how far today's value sits from its average, counted in standard deviations. A standard deviation is the size of a typical swing for that signal, which makes it a fair ruler for very different things like freight indexes and exchange rates.
+| When the app flags | What is worth checking |
+|---|---|
+| Shipping is worse than usual | Your orders due to ship in the next few months, especially anything tied to a launch or sale date |
+| The exchange rate is moving against you | What your upcoming US dollar invoices will cost at today's rate (shown in dollars for your purchases), and whether your prices still cover it |
+| Too much of your buying comes from one country | How you would cope if supply from that country were disrupted, plus which other countries Canada already buys that product from |
+
+The app doesn't tell you what to do. It can't know your contracts, margins or suppliers, and you do. It tells you, early and in plain terms, when something is worth a closer look. When all three are normal, nothing needs your attention.
+
+<p align="center"><img src="assets/divider.svg" width="100%"></p>
+
+## The details
+
+### What a z-score means
+
+A standard deviation is the size of a typical swing for a signal. Measuring every signal in standard deviations makes it a fair ruler for very different things, like a freight index and an exchange rate.
 
 ⭐ **Around 0:** right at the average.
 
-⭐ **Up to 1:** within a normal swing.
+⭐ **Up to 1:** within a normal range.
 
 ⭐ **1 to 2:** unusual. It happens, but not often.
 
@@ -58,25 +80,27 @@ Each signal is compared with its own history, and the result is a **z-score**: h
 
 ⭐ **3 or more:** something is really off.
 
-Below 1 is shown as **Normal**, 1 to 2 as **Worse than usual**, and above 2 as **Much worse than usual**.
+### How each signal is measured
 
 | Signal | What is measured | Source |
 |---|---|---|
-| Shipping | The Global Supply Chain Pressure Index, judged against its full history since 1998. A shorter baseline would include the 2021–22 crisis so heavily that real strain would start to look normal. | New York Fed |
-| Currency | How far the US/Canadian dollar rate moved over the last 30 trading days (about six weeks) and how jumpy it has been over the last 90, both compared with history since 2017. The dollar figures are simple arithmetic: monthly purchases × USD share × the change in the rate. | Bank of Canada |
-| Suppliers | How concentrated your country mix is: square each country's share and add them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and footwear product lines. | Statistics Canada import records, by product and country |
+| <img src="assets/icon-shipping.svg" width="18"> Shipping | The Global Supply Chain Pressure Index, which combines shipping rates with supplier delivery times, order backlogs and stock levels across major economies. It is judged against its full history since 1998, because a shorter baseline would be dominated by the 2021–22 crisis and make real strain look normal. | New York Fed |
+| <img src="assets/icon-currency.svg" width="18"> Currency | How far the US/Canadian dollar rate moved over the last 30 trading days (about six weeks), and how much it has moved day to day over the last 90, both compared with history since 2017. The dollar figures are simple arithmetic: monthly purchases × USD share × the change in the rate. | Bank of Canada |
+| <img src="assets/icon-suppliers.svg" width="18"> Suppliers | How concentrated your country mix is: square each country's share and add them up (one country at 100% gives 1, an even spread gives close to 0). Compared with how concentrated Canadian imports are across clothing and footwear product lines. | Statistics Canada import records, by product and country |
 
 <p align="center">
   <img src="assets/screenshot-shipping.png" alt="Shipping pressure over the last 10 years, with normal, worse and much worse bands shaded" width="92%">
 </p>
 
-## Nothing is a black box
+### Nothing is a black box
 
 Every section of the app has a "See the data and SQL behind this" box. Open it to see the data table behind the chart and the exact query used to calculate it.
 
-## How it stays up to date
+### How it stays up to date
 
 Once a week, an automated job downloads the latest data, cleans it, recalculates everything and refreshes the site. There is no server, no login, and nothing you enter ever leaves your browser. It all runs on free services.
+
+<p align="center"><img src="assets/divider.svg" width="100%"></p>
 
 ## For the technically curious
 
@@ -125,6 +149,6 @@ cd docs && python3 -m http.server 8000
 
 ⭐ The cut-offs for Worse than usual and Much worse than usual are a first-pass choice and haven't been tested against real price changes yet.
 
----
+<p align="center"><img src="assets/divider.svg" width="100%"></p>
 
 <p align="center"><sub>Concept and methodology by <b>Mallika Madhok</b> · Data from the New York Fed, Bank of Canada and Statistics Canada</sub></p>
